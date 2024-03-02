@@ -1,7 +1,6 @@
 package police
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/alvaromfcunha/lol-elo-police/internal/model"
@@ -19,10 +18,10 @@ type Police struct {
 }
 
 func (p Police) Start() {
-	_ = setInterval(
-		p.PatrolJob,
-		p.Interval,
-	)
+	for {
+		time.Sleep(p.Interval)
+		p.PatrolJob()
+	}
 }
 
 func (p Police) PatrolJob() {
@@ -47,9 +46,17 @@ func (p Police) PatrolJob() {
 			solo.Losses != player.Losses ||
 			solo.Rank != player.Rank ||
 			solo.Tier != player.Tier {
+
 			text := player.GameName + "#" + player.TagLine + " mudou!"
-			fmt.Println(text)
 			p.WppClient.SendMessageToGroup(text, p.GroupUser)
+
+			player.LeaguePoints = solo.LeaguePoints
+			player.Wins = solo.Wins
+			player.Losses = solo.Losses
+			player.Rank = solo.Rank
+			player.Tier = solo.Tier
+
+			p.Db.Save(player)
 		}
 	}
 }
