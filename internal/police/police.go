@@ -1,6 +1,9 @@
 package police
 
 import (
+	"bytes"
+	"fmt"
+	"text/template"
 	"time"
 
 	"github.com/alvaromfcunha/lol-elo-police/internal/model"
@@ -17,46 +20,70 @@ type Police struct {
 	GroupUser string
 }
 
+type PlayerUpdate struct {
+	LeagueEntry lol.LeagueEntry
+	Player      model.Player
+}
+
 func (p Police) Start() {
+	messagesFile := "messages.txt"
+	tmpl, err := template.New(messagesFile).ParseFiles(messagesFile)
+	if err != nil {
+		panic("can't load " + messagesFile + " template file")
+	}
+
 	for {
 		time.Sleep(p.Interval)
-		p.PatrolJob()
+		p.PatrolJob(tmpl)
 	}
 }
 
-func (p Police) PatrolJob() {
+func (p Police) PatrolJob(tmpl *template.Template) {
 	var players []model.Player
 	p.Db.Find(&players)
 
 	for _, player := range players {
-		leagues, err := p.LolApi.GetLeaguesBySummonerId(player.SummonerId)
-		if err != nil {
-			continue
-		}
-
-		var solo *lol.LeagueEntry
-		for _, league := range leagues {
-			if league.QueueType == lol.QueueType(lol.Solo) {
-				solo = &league
+		go func(player model.Player) {
+			leagues, err := p.LolApi.GetLeaguesBySummonerId(player.SummonerId)
+			if err != nil {
+				return
 			}
-		}
 
-		if solo.LeaguePoints != player.LeaguePoints ||
-			solo.Wins != player.Wins ||
-			solo.Losses != player.Losses ||
-			solo.Rank != player.Rank ||
-			solo.Tier != player.Tier {
+			var solo *lol.LeagueEntry
+			for _, league := range leagues {
+				if league.QueueType == lol.QueueType(lol.Solo) {
+					solo = &league
+					break
+				}
+			}
 
-			text := player.GameName + "#" + player.TagLine + " mudou!"
-			p.WppClient.SendMessageToGroup(text, p.GroupUser)
+			if solo.LeaguePoints != player.LeaguePoints ||
+				solo.Wins != player.Wins ||
+				solo.Losses != player.Losses ||
+				solo.Rank != player.Rank ||
+				solo.Tier != player.Tier {
 
-			player.LeaguePoints = solo.LeaguePoints
-			player.Wins = solo.Wins
-			player.Losses = solo.Losses
-			player.Rank = solo.Rank
-			player.Tier = solo.Tier
+				update := PlayerUpdate{
+					LeagueEntry: *solo,
+					Player:      player,
+				}
 
-			p.Db.Save(player)
-		}
+				var textBuf bytes.Buffer
+				err = tmpl.Execute(&textBuf, update)
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				p.WppClient.SendMessageToGroup(textBuf.String(), p.GroupUser)
+
+				player.LeaguePoints = solo.LeaguePoints
+				player.Wins = solo.Wins
+				player.Losses = solo.Losses
+				player.Rank = solo.Rank
+				player.Tier = solo.Tier
+
+				p.Db.Save(player)
+			}
+		}(player)
 	}
 }
