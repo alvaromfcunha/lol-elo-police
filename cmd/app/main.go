@@ -1,24 +1,39 @@
 package main
 
 import (
+	"os"
+	"strconv"
 	"time"
 
 	playerHandler "github.com/alvaromfcunha/lol-elo-police/internal/handler/player"
 	"github.com/alvaromfcunha/lol-elo-police/internal/model"
+	"github.com/alvaromfcunha/lol-elo-police/internal/police"
 	"github.com/alvaromfcunha/lol-elo-police/pkg/lol"
-	"github.com/alvaromfcunha/lol-elo-police/pkg/police"
 	"github.com/alvaromfcunha/lol-elo-police/pkg/wpp"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
+	riotApiKey := os.Getenv("RIOT_API_KEY")
+	wppGroupUser := os.Getenv("WPP_GROUP_USER")
+	policeIntervalMinutes := os.Getenv("POLICE_INTERVAL_MINUTES")
+
+	minutes, err := strconv.Atoi(policeIntervalMinutes)
+	if err != nil {
+		panic("invalid POLICE_INTERVAL_MINUTES dotenv var")
+	}
+
 	db, err := gorm.Open(sqlite.Open("db/app.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
 	db.AutoMigrate(&model.Player{})
+
+	app := fiber.New()
 
 	wpp := wpp.WhatsappClient{}
 	err = wpp.Init()
@@ -27,27 +42,23 @@ func main() {
 	}
 
 	lol := lol.LolApi{
-		ApiKey: "RGAPI-b11d5bf3-b56d-4856-b50f-d685f7495360",
+		ApiKey: riotApiKey,
 	}
-
+	pol := police.Police{
+		Interval:  time.Duration(minutes) * time.Minute,
+		Db:        db,
+		LolApi:    lol,
+		WppClient: wpp,
+		GroupUser: wppGroupUser,
+	}
 	ph := playerHandler.PlayerHandler{
 		Db:     db,
 		LolApi: lol,
 	}
 
-	app := fiber.New()
 	app.Post("/player", ph.CreatePlayer)
 	app.Get("/player", ph.ReadAllPlayers)
-	go app.Listen(":3000")
 
-	pol := police.Police{
-		Interval:  5 * time.Minute,
-		Db:        db,
-		LolApi:    lol,
-		WppClient: wpp,
-		GroupUser: "553599945538-1596561080",
-	}
-	pol.Start()
-
-	<-make(chan bool)
+	go pol.Start()
+	app.Listen(":3000")
 }

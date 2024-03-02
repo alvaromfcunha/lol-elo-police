@@ -4,6 +4,7 @@ go 1.21.6
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.1
+	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.22
 	go.mau.fi/whatsmeow v0.0.0-20240227155050-c5e8575efc35
 	gorm.io/driver/sqlite v1.5.5
