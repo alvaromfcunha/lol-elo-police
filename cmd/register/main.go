@@ -15,7 +15,7 @@ import (
 func main() {
 	c, err := wpp.GetClient()
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	if c.Store.ID != nil {
@@ -42,7 +42,7 @@ func main() {
 		}
 	}
 
-	e := make(chan os.Signal)
+	e := make(chan os.Signal, 1)
 	signal.Notify(e, os.Interrupt, syscall.SIGTERM)
 	<-e
 
