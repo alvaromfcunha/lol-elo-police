@@ -66,13 +66,13 @@ func (u PolicePatrol) checkRankedQueueUpdate(
 	rankedInfo entity.RankedInfo,
 	leagueEntry service.LeagueEntry,
 ) error {
-	// isQueueUpdate := leagueEntry.LeaguePoints != rankedInfo.LeaguePoints ||
-	// 	leagueEntry.Wins != rankedInfo.Wins ||
-	// 	leagueEntry.Losses != rankedInfo.Losses ||
-	// 	leagueEntry.Rank != rankedInfo.Rank ||
-	// 	leagueEntry.Tier != rankedInfo.Tier
+	isQueueUpdate := leagueEntry.LeaguePoints != rankedInfo.LeaguePoints ||
+		leagueEntry.Wins != rankedInfo.Wins ||
+		leagueEntry.Losses != rankedInfo.Losses ||
+		leagueEntry.Rank != rankedInfo.Rank ||
+		leagueEntry.Tier != rankedInfo.Tier
 
-	if true {
+	if isQueueUpdate {
 		queueUpdateData := service.QueueUpdateData{
 			Player:         player,
 			RankedType:     getReadableQueueType(rankedInfo.QueueType),
