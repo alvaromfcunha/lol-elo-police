@@ -34,11 +34,17 @@ func (s WhatsappService) SendMessageToGroup(text string, group string) (resp wha
 		Server: types.GroupServer,
 	}
 
+	s.Client.SendPresence(types.PresenceAvailable)
+	s.Client.SendChatPresence(jid, types.ChatPresenceComposing, types.ChatPresenceMediaText)
+
 	resp, err = s.Client.SendMessage(
 		context.Background(),
 		jid,
 		msg,
 	)
+
+	s.Client.SendChatPresence(jid, types.ChatPresencePaused, types.ChatPresenceMediaText)
+	s.Client.SendPresence(types.PresenceUnavailable)
 
 	return
 }
