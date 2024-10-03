@@ -27,7 +27,8 @@ func (u PolicePatrol) Execute() error {
 	for _, player := range players {
 		leagues, err := u.LolService.GetLeaguesBySummonerId(player.SummonerId)
 		if err != nil {
-			return errors.New("cannot player leagues by summoner id")
+			errors.Join(err, errors.New("cannot player leagues by summoner id"))
+			continue
 		}
 
 		var soloQueueInfo *entity.RankedInfo
@@ -44,21 +45,21 @@ func (u PolicePatrol) Execute() error {
 			switch league.QueueType {
 			case enum.Solo:
 				if soloQueueInfo != nil {
-					return u.checkRankedQueueUpdate(player, *soloQueueInfo, league)
+					errors.Join(err, u.checkRankedQueueUpdate(player, *soloQueueInfo, league))
 				} else {
-					return u.notifyNewRankedQueueEntry(player, enum.Solo, league)
+					errors.Join(err, u.notifyNewRankedQueueEntry(player, enum.Solo, league))
 				}
 			case enum.Flex:
 				if flexQueueInfo != nil {
-					return u.checkRankedQueueUpdate(player, *flexQueueInfo, league)
+					errors.Join(err, u.checkRankedQueueUpdate(player, *flexQueueInfo, league))
 				} else {
-					return u.notifyNewRankedQueueEntry(player, enum.Flex, league)
+					errors.Join(err, u.notifyNewRankedQueueEntry(player, enum.Flex, league))
 				}
 			}
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (u PolicePatrol) checkRankedQueueUpdate(
