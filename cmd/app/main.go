@@ -1,64 +1,70 @@
 package main
 
 import (
-	"os"
-	"strconv"
-	"time"
+	"text/template"
 
-	playerHandler "github.com/alvaromfcunha/lol-elo-police/internal/handler/player"
-	"github.com/alvaromfcunha/lol-elo-police/internal/model"
-	"github.com/alvaromfcunha/lol-elo-police/internal/police"
-	"github.com/alvaromfcunha/lol-elo-police/pkg/lol"
-	"github.com/alvaromfcunha/lol-elo-police/pkg/wpp"
+	"github.com/alvaromfcunha/lol-elo-police/cmd/app/controller"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/robfig/cron/v3"
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/store/sqlstore"
 
-	_ "github.com/joho/godotenv/autoload"
+	"database/sql"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	riotApiKey := os.Getenv("RIOT_API_KEY")
-	wppGroupUser := os.Getenv("WPP_GROUP_USER")
-	policeIntervalMinutes := os.Getenv("POLICE_INTERVAL_MINUTES")
-
-	minutes, err := strconv.Atoi(policeIntervalMinutes)
+	// Env.
+	err := godotenv.Load("./infrastructure/config/.env")
 	if err != nil {
-		panic("invalid POLICE_INTERVAL_MINUTES dotenv var")
+		panic("cannot load env")
 	}
 
-	db, err := gorm.Open(sqlite.Open("db/app.db"), &gorm.Config{})
+	// Database.
+	db, err := sql.Open("sqlite3", "file:./infrastructure/database/app.db")
 	if err != nil {
-		panic("failed to connect database")
+		panic("cannot connect to database")
 	}
-	db.AutoMigrate(&model.Player{})
 
-	app := fiber.New()
-
-	wpp := wpp.WhatsappClient{}
-	err = wpp.Init()
+	// Template engine.
+	messageTemplates, err := template.ParseFiles("./infrastructure/template/messages.txt")
 	if err != nil {
-		panic(err)
+		panic("cannot load template file")
 	}
 
-	lol := lol.LolApi{
-		ApiKey: riotApiKey,
+	// Whatsapp/Whatsmeow.
+	container, err := sqlstore.New("sqlite3", "file:./infrastructure/database/whatsapp.db?_foreign_keys=on", nil)
+	if err != nil {
+		panic("cannot load whatsmeow store from sqlite file")
 	}
-	pol := police.Police{
-		Interval:  time.Duration(minutes) * time.Minute,
-		Db:        db,
-		LolApi:    lol,
-		WppClient: wpp,
-		GroupUser: wppGroupUser,
+	deviceStore, err := container.GetFirstDevice()
+	if err != nil {
+		panic("cannot retrieve registered device on whatsmeow store")
 	}
-	ph := playerHandler.PlayerHandler{
-		Db:     db,
-		LolApi: lol,
+	whatsappClient := whatsmeow.NewClient(deviceStore, nil)
+	if whatsappClient.Store.ID == nil {
+		panic("cannot load registered device on whatsmeow store")
+	}
+	err = whatsappClient.Connect()
+	if err != nil {
+		panic("cannot connect whatsmeow client")
 	}
 
-	app.Post("/player", ph.CreatePlayer)
-	app.Get("/player", ph.ReadAllPlayers)
+	// Scheduler.
+	cron := cron.New()
 
-	go pol.Start()
-	app.Listen(":3000")
+	cron.AddFunc("*/1 * * * *", controller.PatrolRoutineController(db, messageTemplates, whatsappClient))
+
+	cron.Start()
+
+	// API.
+	api := fiber.New()
+
+	api.Post("/players", controller.CreatePlayerController(db))
+	api.Get("/players", controller.GetPlayersController(db))
+	api.Post("/execute/patrol", controller.ExecutePatrolController(db, messageTemplates, whatsappClient))
+
+	api.Listen(":3000") // blocking
 }

@@ -2,37 +2,40 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/alvaromfcunha/lol-elo-police/pkg/wpp"
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types/events"
 )
 
 func main() {
-	c, err := wpp.GetClient()
+	container, err := sqlstore.New("sqlite3", "file:./infrastructure/database/whatsapp.db?_foreign_keys=on", nil)
+	if err != nil {
+		panic("cannot load whatsmeow store from sqlite file")
+	}
+	deviceStore, err := container.GetFirstDevice()
+	if err != nil {
+		panic("cannot retrieve registered device on whatsmeow store")
+	}
+	client := whatsmeow.NewClient(deviceStore, nil)
+	if client.Store.ID == nil {
+		panic("cannot load registered device on whatsmeow store")
+	}
+
+	qrChan, _ := client.GetQRChannel(context.Background())
+	err = client.Connect()
 	if err != nil {
 		panic(err)
 	}
-
-	if c.Store.ID != nil {
-		err = errors.New("device registered in store already")
-		panic(err)
-	}
-
-	qrChan, _ := c.GetQRChannel(context.Background())
-	err = c.Connect()
-	if err != nil {
-		panic(err)
-	}
-	c.AddEventHandler(func(evt interface{}) {
+	client.AddEventHandler(func(evt interface{}) {
 		switch evt.(type) {
 		case *events.AppStateSyncComplete:
 			fmt.Println("done!")
-			c.Disconnect()
+			client.Disconnect()
 		}
 	})
 
@@ -46,5 +49,5 @@ func main() {
 	signal.Notify(e, os.Interrupt, syscall.SIGTERM)
 	<-e
 
-	c.Disconnect()
+	client.Disconnect()
 }

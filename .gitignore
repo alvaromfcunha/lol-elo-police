@@ -1,4 +1,5 @@
-/db/*.db
 .env
-app
-register
+/internal/generated
+/bin
+*.db
+/tmp

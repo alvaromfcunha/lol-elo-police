@@ -7,23 +7,20 @@ register:
 deregister:
 	rm db/wpp.db
 
+sqlc:
+	@sqlc generate -f infrastructure/database/sqlc.yml
+
+migration:
+	@goose -dir infrastructure/database/migrations sqlite3 infrastructure/database/app.db create $(NAME) sql
+
+up:
+	@goose -dir infrastructure/database/migrations sqlite3 infrastructure/database/app.db up
+
+reset:
+	@goose -dir infrastructure/database/migrations sqlite3 infrastructure/database/app.db reset
+
+status:
+	@goose -dir infrastructure/database/migrations sqlite3 infrastructure/database/app.db status
+
 build:
-	go build -o app cmd/app/main.go && go build -o register cmd/register/main.go
-
-build-armv6-app:
-	GOOS=linux \
-	GOARCH=arm \
-	GOARM=6 \
-	CGO_ENABLED=1 \
-	CC=arm-linux-gnueabi-gcc \
-	go build -o app cmd/app/main.go
-
-build-armv6-register:
-	GOOS=linux \
-	GOARCH=arm \
-	GOARM=6 \
-	CGO_ENABLED=1 \
-	CC=arm-linux-gnueabi-gcc \
-	go build -o register cmd/register/main.go
-
-build-armv6: build-armv6-app build-armv6-register
+	go build -o bin/app cmd/app/main.go && go build -o bin/register cmd/register/main.go

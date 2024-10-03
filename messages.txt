@@ -1,5 +1,0 @@
-O *{{.Player.GameName}}#{{.Player.TagLine}}* jogou!
-
-Elo: {{.Player.Tier}} {{.Player.Rank}} -> {{.LeagueEntry.Tier}} {{.LeagueEntry.Rank}}
-PDLs: {{.Player.LeaguePoints}} -> {{.LeagueEntry.LeaguePoints}}
-Placar: {{.Player.Wins}}W {{.Player.Losses}}L -> {{.LeagueEntry.Wins}}W {{.LeagueEntry.Losses}}L

@@ -1,0 +1,11 @@
+{{ block "QueueUpdate" . }}O *{{.Player.GameName}}#{{.Player.TagLine}}* jogou uma {{.RankedType}}!
+
+Elo: {{.OldRankedInfo.Tier}} {{.OldRankedInfo.Rank}} -> {{.NewLeagueEntry.Tier}} {{.NewLeagueEntry.Rank}}
+PDLs: {{.OldRankedInfo.LeaguePoints}} -> {{.NewLeagueEntry.LeaguePoints}}
+Placar: {{.OldRankedInfo.Wins}}W {{.OldRankedInfo.Losses}}L -> {{.NewLeagueEntry.Wins}}W {{.NewLeagueEntry.Losses}}L{{ end }}
+
+{{ block "QueueNewEntry" . }}O *{{.Player.GameName}}#{{.Player.TagLine}}* terminou a MD5 da {{.RankedType}}!
+
+Elo: {{.LeagueEntry.Tier}} {{.LeagueEntry.Rank}}
+PDLs: {{.LeagueEntry.LeaguePoints}}
+Placar: {{.LeagueEntry.Wins}}W {{.LeagueEntry.Losses}}L{{ end }}
