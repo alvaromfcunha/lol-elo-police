@@ -1,33 +1,14 @@
 package service
 
-import "github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
-
-type RiotId struct {
-	GameName string
-	TagLine  string
-}
-
-type RiotAccount struct {
-	Puuid    string
-	GameName string
-	TagLine  string
-}
-
-type LeagueEntry struct {
-	QueueType    enum.QueueType
-	Tier         enum.Tier
-	Rank         enum.Rank
-	LeaguePoints int
-	Wins         int
-	Losses       int
-}
-
-type Summoner struct {
-	Id string
-}
+import (
+	"github.com/KnutZuidema/golio/riot/account"
+	"github.com/KnutZuidema/golio/riot/lol"
+)
 
 type ILolService interface {
-	GetAccountByRiotId(riotId RiotId) (RiotAccount, error)
-	GetLeaguesBySummonerId(id string) ([]LeagueEntry, error)
-	GetSummonerByPuuid(puuid string) (Summoner, error)
+	GetAccountByRiotId(gameName string, tagLine string) (*account.Account, error)
+	GetLeaguesBySummonerId(id string) ([]*lol.LeagueItem, error)
+	GetSummonerByPuuid(puuid string) (*lol.Summoner, error)
+	GetMatchIdListByPuuid(puuid string) ([]*string, error)
+	GetMatchByMatchId(matchId string) (*lol.Match, error)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/KnutZuidema/golio/riot/lol"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
@@ -28,10 +29,8 @@ type CreatePlayerOutput struct {
 
 func (u CreatePlayer) Execute(input CreatePlayerInput) (output CreatePlayerOutput, err error) {
 	account, err := u.LolService.GetAccountByRiotId(
-		service.RiotId{
-			GameName: input.GameName,
-			TagLine:  input.TagLine,
-		},
+		input.GameName,
+		input.TagLine,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cannot get riot account by riot id:", err)
@@ -47,32 +46,33 @@ func (u CreatePlayer) Execute(input CreatePlayerInput) (output CreatePlayerOutpu
 	}
 
 	player := entity.NewPlayer(
-		summoner.Id,
+		summoner.ID,
+		account.Puuid,
 		account.GameName,
 		account.TagLine,
 	)
 
-	leagues, err := u.LolService.GetLeaguesBySummonerId(summoner.Id)
+	leagues, err := u.LolService.GetLeaguesBySummonerId(summoner.ID)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cannot get leagues by summoner id:", err)
 		err = errors.New("cannot get leagues by summoner id")
 		return
 	}
 
-	var soloQueue *service.LeagueEntry
-	var flexQueue *service.LeagueEntry
+	var soloQueue *lol.LeagueItem
+	var flexQueue *lol.LeagueItem
 	for _, league := range leagues {
 		switch league.QueueType {
-		case enum.Solo:
-			soloQueue = &league
-		case enum.Flex:
-			flexQueue = &league
+		case string(lol.QueueRankedSolo):
+			soloQueue = league
+		case string(lol.QueueRankedFlex):
+			flexQueue = league
 		}
 	}
 
 	err = u.PlayerRepository.Create(player)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot create player on database:", err)
+		fmt.Fprintln(os.Stdout, "cannot create player on database:", err)
 		err = errors.New("cannot create player on database")
 		return
 	}

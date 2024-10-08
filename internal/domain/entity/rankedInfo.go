@@ -9,8 +9,8 @@ type RankedInfo struct {
 	Id           uuid.UUID      `json:"id"`
 	Player       Player         `json:"-"`
 	QueueType    enum.QueueType `json:"queueType"`
-	Tier         enum.Tier      `json:"tier"`
-	Rank         enum.Rank      `json:"rank"`
+	Tier         string         `json:"tier"`
+	Rank         string         `json:"rank"`
 	LeaguePoints int            `json:"leaguePoints"`
 	Wins         int            `json:"wins"`
 	Losses       int            `json:"losses"`
@@ -19,8 +19,8 @@ type RankedInfo struct {
 func NewRankedInfo(
 	player Player,
 	queueType enum.QueueType,
-	tier enum.Tier,
-	rank enum.Rank,
+	tier string,
+	rank string,
 	leaguePoints int,
 	wins int,
 	losses int,

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 
+	"github.com/KnutZuidema/golio/riot/lol"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
@@ -43,13 +44,13 @@ func (u PolicePatrol) Execute() error {
 
 		for _, league := range leagues {
 			switch league.QueueType {
-			case enum.Solo:
+			case string(lol.QueueRankedSolo):
 				if soloQueueInfo != nil {
 					errors.Join(err, u.checkRankedQueueUpdate(player, *soloQueueInfo, league))
 				} else {
 					errors.Join(err, u.notifyNewRankedQueueEntry(player, enum.Solo, league))
 				}
-			case enum.Flex:
+			case string(lol.QueueRankedFlex):
 				if flexQueueInfo != nil {
 					errors.Join(err, u.checkRankedQueueUpdate(player, *flexQueueInfo, league))
 				} else {
@@ -65,7 +66,7 @@ func (u PolicePatrol) Execute() error {
 func (u PolicePatrol) checkRankedQueueUpdate(
 	player entity.Player,
 	rankedInfo entity.RankedInfo,
-	leagueEntry service.LeagueEntry,
+	leagueEntry *lol.LeagueItem,
 ) error {
 	isQueueUpdate := leagueEntry.LeaguePoints != rankedInfo.LeaguePoints ||
 		leagueEntry.Wins != rankedInfo.Wins ||
@@ -77,7 +78,7 @@ func (u PolicePatrol) checkRankedQueueUpdate(
 		queueUpdateData := service.QueueUpdateData{
 			Player:         player,
 			RankedType:     getReadableQueueType(rankedInfo.QueueType),
-			NewLeagueEntry: leagueEntry,
+			NewLeagueEntry: *leagueEntry,
 			OldRankedInfo:  rankedInfo,
 		}
 
@@ -110,12 +111,12 @@ func (u PolicePatrol) checkRankedQueueUpdate(
 func (u PolicePatrol) notifyNewRankedQueueEntry(
 	player entity.Player,
 	queueType enum.QueueType,
-	leagueEntry service.LeagueEntry,
+	leagueEntry *lol.LeagueItem,
 ) error {
 	queueNewEntryData := service.QueueNewEntryData{
 		Player:      player,
 		RankedType:  getReadableQueueType(queueType),
-		LeagueEntry: leagueEntry,
+		LeagueEntry: *leagueEntry,
 	}
 
 	message, err := u.TemplateService.ExecuteQueueNewEntryMessageTemplate(queueNewEntryData)

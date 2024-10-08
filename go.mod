@@ -5,12 +5,15 @@ go 1.22.0
 toolchain go1.22.7
 
 require (
+	github.com/KnutZuidema/golio v1.0.0
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.23
 	go.mau.fi/whatsmeow v0.0.0-20241001150013-71e7937b706a
 )
+
+require github.com/sirupsen/logrus v1.9.0 // indirect
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect

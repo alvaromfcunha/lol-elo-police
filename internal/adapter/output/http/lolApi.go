@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alvaromfcunha/lol-elo-police/internal/domain/service"
+	"github.com/KnutZuidema/golio/riot/account"
+	"github.com/KnutZuidema/golio/riot/lol"
 )
 
 const (
@@ -52,32 +53,53 @@ func (s LolApi) fetch(method string, url string, response any) (err error) {
 	return
 }
 
-func (s LolApi) GetAccountByRiotId(riotId service.RiotId) (acc service.RiotAccount, err error) {
+func (s LolApi) GetAccountByRiotId(gameName string, tagLine string) (acc *account.Account, err error) {
 	url := AMERICAS_RIOT_URL +
 		"/account/v1/accounts/by-riot-id/" +
-		riotId.GameName + "/" + riotId.TagLine
+		gameName + "/" + tagLine
 
-	err = s.fetch("GET", url, &acc)
+	err = s.fetch("GET", url, acc)
 
 	return
 }
 
-func (s LolApi) GetLeaguesBySummonerId(id string) (lgs []service.LeagueEntry, err error) {
+func (s LolApi) GetLeaguesBySummonerId(id string) (lgs []*lol.LeagueItem, err error) {
 	url := BR1_LOL_URL +
 		"/league/v4/entries/by-summoner/" +
 		id
 
-	err = s.fetch("GET", url, &lgs)
+	err = s.fetch("GET", url, lgs)
 
 	return
 }
 
-func (s LolApi) GetSummonerByPuuid(puuid string) (smm service.Summoner, err error) {
+func (s LolApi) GetSummonerByPuuid(puuid string) (smm *lol.Summoner, err error) {
 	url := BR1_LOL_URL +
 		"/summoner/v4/summoners/by-puuid/" +
 		puuid
 
-	err = s.fetch("GET", url, &smm)
+	err = s.fetch("GET", url, smm)
+
+	return
+}
+
+func (s LolApi) GetMatchIdListByPuuid(puuid string) (mil []*string, err error) {
+	url := BR1_LOL_URL +
+		"/match/v5/matches/by-puuid/" +
+		puuid +
+		"/ids"
+
+	err = s.fetch("GET", url, mil)
+
+	return
+}
+
+func (s LolApi) GetMatchByMatchId(matchId string) (me *lol.Match, err error) {
+	url := BR1_LOL_URL +
+		"/match/v5/matches/" +
+		matchId
+
+	err = s.fetch("GET", url, me)
 
 	return
 }

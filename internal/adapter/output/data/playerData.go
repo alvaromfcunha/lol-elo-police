@@ -26,6 +26,7 @@ func (r PlayerData) Create(player entity.Player) error {
 		database.CreatePlayerParams{
 			ExternalID: player.Id.String(),
 			SummonerID: player.SummonerId,
+			Puuid:      player.Puuid,
 			GameName:   player.GameName,
 			TagLine:    player.TagLine,
 		},

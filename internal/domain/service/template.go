@@ -1,18 +1,21 @@
 package service
 
-import "github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
+import (
+	"github.com/KnutZuidema/golio/riot/lol"
+	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
+)
 
 type QueueUpdateData struct {
 	Player         entity.Player
 	RankedType     string
-	NewLeagueEntry LeagueEntry
+	NewLeagueEntry lol.LeagueItem
 	OldRankedInfo  entity.RankedInfo
 }
 
 type QueueNewEntryData struct {
 	Player      entity.Player
 	RankedType  string
-	LeagueEntry LeagueEntry
+	LeagueEntry lol.LeagueItem
 }
 
 type ITemplateService interface {

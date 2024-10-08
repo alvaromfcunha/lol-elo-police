@@ -11,6 +11,7 @@ func AssemblePlayer(player database.Player) entity.Player {
 	return entity.Player{
 		Id:         uuid.MustParse(player.ExternalID),
 		SummonerId: player.SummonerID,
+		Puuid:      player.Puuid,
 		GameName:   player.GameName,
 		TagLine:    player.TagLine,
 	}
@@ -21,8 +22,8 @@ func AssembleRankedInfo(rankedInfo database.RankedInfo, player database.Player) 
 		Id:           uuid.MustParse(rankedInfo.ExternalID),
 		Player:       AssemblePlayer(player),
 		QueueType:    enum.QueueType(rankedInfo.QueueType),
-		Tier:         enum.Tier(rankedInfo.Tier),
-		Rank:         enum.Rank(rankedInfo.Rank),
+		Tier:         rankedInfo.Tier,
+		Rank:         rankedInfo.Rank,
 		LeaguePoints: int(rankedInfo.LeaguePoints),
 		Wins:         int(rankedInfo.Wins),
 		Losses:       int(rankedInfo.Losses),

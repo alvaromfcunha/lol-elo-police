@@ -2,11 +2,13 @@
 INSERT INTO player (
     external_id,
     summoner_id,
+    puuid,
     game_name,
     tag_line
 ) VALUES (
     @external_id,
     @summoner_id,
+    @puuid,
     @game_name,
     @tag_line
 ) RETURNING *;
