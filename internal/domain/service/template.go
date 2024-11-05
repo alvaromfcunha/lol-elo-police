@@ -5,20 +5,23 @@ import (
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 )
 
-type QueueUpdateData struct {
-	Player         entity.Player
-	RankedType     string
-	NewLeagueEntry lol.LeagueItem
-	OldRankedInfo  entity.RankedInfo
+type MatchParticipantWithRankedInfo struct {
+	MatchParticipant entity.MatchParticipant
+	RankedInfo       entity.RankedInfo
+	LeagueItem       *lol.LeagueItem
 }
 
-type QueueNewEntryData struct {
-	Player      entity.Player
-	RankedType  string
-	LeagueEntry lol.LeagueItem
+type NewRankedMatchData struct {
+	Match                           entity.Match
+	MatchParticipantsWithLeagueItem []MatchParticipantWithRankedInfo
+}
+
+type NewUnrankedMatchData struct {
+	Match             entity.Match
+	MatchParticipants []entity.MatchParticipant
 }
 
 type ITemplateService interface {
-	ExecuteQueueUpdateMessageTemplate(data QueueUpdateData) (string, error)
-	ExecuteQueueNewEntryMessageTemplate(data QueueNewEntryData) (string, error)
+	ExecuteNewRankedMatchMessageTemplate(data NewRankedMatchData) (string, error)
+	ExecuteNewUnrankedMatchMessageTemplate(data NewUnrankedMatchData) (string, error)
 }

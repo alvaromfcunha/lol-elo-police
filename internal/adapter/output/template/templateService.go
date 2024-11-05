@@ -15,10 +15,10 @@ func NewTemplateService(templates *template.Template) TemplateService {
 	return TemplateService{templates}
 }
 
-func (s TemplateService) ExecuteQueueUpdateMessageTemplate(data service.QueueUpdateData) (text string, err error) {
+func (s TemplateService) ExecuteNewRankedMatchMessageTemplate(data service.NewRankedMatchData) (text string, err error) {
 	var textBuf bytes.Buffer
 
-	err = s.templates.ExecuteTemplate(&textBuf, "QueueUpdate", data)
+	err = s.templates.ExecuteTemplate(&textBuf, "NewRankedMatch", data)
 	if err != nil {
 		return
 	}
@@ -28,10 +28,10 @@ func (s TemplateService) ExecuteQueueUpdateMessageTemplate(data service.QueueUpd
 	return
 }
 
-func (s TemplateService) ExecuteQueueNewEntryMessageTemplate(data service.QueueNewEntryData) (text string, err error) {
+func (s TemplateService) ExecuteNewUnrankedMatchMessageTemplate(data service.NewUnrankedMatchData) (text string, err error) {
 	var textBuf bytes.Buffer
 
-	err = s.templates.ExecuteTemplate(&textBuf, "QueueNewEntry", data)
+	err = s.templates.ExecuteTemplate(&textBuf, "NewUnrankedMatch", data)
 	if err != nil {
 		return
 	}

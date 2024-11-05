@@ -1,0 +1,47 @@
+
+{{ block "NewRankedMatch" . -}}
+{{ template "playerList" .MatchParticipantsWithLeagueItem }} jogaram {{ template "queueType" .Match.QueueIdType }}!
+
+---
+{{ template "rankedMatchParticipantsInfo" .MatchParticipantsWithLeagueItem }}
+{{- end }}
+
+{{ define "playerList" -}}
+    {{ if (len . | eq 1) -}}
+        *{{ (index . 0).MatchParticipant.Player.GameName }}#{{ (index . 0).MatchParticipant.Player.TagLine }}*
+    {{- else if (len . | eq 2) -}}
+        *{{ (index . 0).MatchParticipant.Player.GameName }}#{{ (index . 0).MatchParticipant.Player.TagLine }}* e *{{ (index . 1).MatchParticipant.Player.GameName }}#{{ (index . 1).MatchParticipant.Player.TagLine }}*
+    {{- else -}}
+        *{{ (index . 0).MatchParticipant.Player.GameName }}#{{ (index . 0).MatchParticipant.Player.TagLine }}*{{ range (slice . 1 (sub (len .) 1))}}, *{{ .MatchParticipant.Player.GameName }}#{{ .MatchParticipant.Player.TagLine }}*{{ end }} e *{{ (index . (sub (len .) 1)).MatchParticipant.Player.GameName }}#{{ (index . (sub (len .) 1)).MatchParticipant.Player.TagLine }}*
+    {{- end }}
+{{- end }}
+
+{{ define "queueType" -}}
+    {{ if . | eq 400 -}}
+        um *Normal Game*
+    {{- else if . | eq 420 -}}
+        uma *Solo Queue*
+    {{- else if . | eq 440 -}}
+        uma *Flex*
+    {{- else if . | eq 450 -}}
+        um *ARAM*
+    {{- else if . | eq 490 -}}
+        um *Normal Game (Quickplay)*
+    {{- else -}}
+        um jogo
+    {{- end }}
+{{- end }}
+
+{{ define "rankedMatchParticipantsInfo" -}}
+{{ range . -}}
+*{{ .MatchParticipant.Player.GameName }}#{{ .MatchParticipant.Player.TagLine }}*:
+
+  Posição: *{{ .MatchParticipant.Role }}*
+  Campeão: *{{ .MatchParticipant.Champion }}*
+  KDA: *{{ .MatchParticipant.Kills }}/{{ .MatchParticipant.Deaths }}/{{ .MatchParticipant.Assists }}*
+  Elo: {{ .MatchParticipant.Player.Tier }} {{ .MatchParticipant.Player.Rank }} -> {{ .LeagueItem.Rank }} {{ .LeagueItem.Tier }}
+  PDLs: {{ .MatchParticipant.Player.LeaguePoints }} -> {{ .LeagueItem.LeaguePoints }}
+  Placar: {{ .MatchParticipant.Player.Wins }}W {{ .MatchParticipant.Player.Losses }}L -> {{ .LeagueItem.Wins }}W {{ .LeagueItem.Losses }}L
+---
+{{ end }}
+{{- end }}

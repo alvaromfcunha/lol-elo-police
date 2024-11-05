@@ -1,11 +1,28 @@
-{{ block "QueueUpdate" . }}O *{{.Player.GameName}}#{{.Player.TagLine}}* jogou uma {{.RankedType}}!
+{{- block "QueueUpdate" . }}
+O *{{.Player.GameName}}#{{.Player.TagLine}}* jogou uma {{.RankedType}}!
 
 Elo: {{.OldRankedInfo.Tier}} {{.OldRankedInfo.Rank}} -> {{.NewLeagueEntry.Tier}} {{.NewLeagueEntry.Rank}}
 PDLs: {{.OldRankedInfo.LeaguePoints}} -> {{.NewLeagueEntry.LeaguePoints}}
-Placar: {{.OldRankedInfo.Wins}}W {{.OldRankedInfo.Losses}}L -> {{.NewLeagueEntry.Wins}}W {{.NewLeagueEntry.Losses}}L{{ end }}
+Placar: {{.OldRankedInfo.Wins}}W {{.OldRankedInfo.Losses}}L -> {{.NewLeagueEntry.Wins}}W {{.NewLeagueEntry.Losses}}L
+{{- end }}
 
-{{ block "QueueNewEntry" . }}O *{{.Player.GameName}}#{{.Player.TagLine}}* terminou a MD5 da {{.RankedType}}!
+{{- block "QueueNewEntry" . }}
+O *{{.Player.GameName}}#{{.Player.TagLine}}* terminou a MD5 da {{.RankedType}}!
 
 Elo: {{.LeagueEntry.Tier}} {{.LeagueEntry.Rank}}
 PDLs: {{.LeagueEntry.LeaguePoints}}
-Placar: {{.LeagueEntry.Wins}}W {{.LeagueEntry.Losses}}L{{ end }}
+Placar: {{.LeagueEntry.Wins}}W {{.LeagueEntry.Losses}}L
+{{- end }}
+
+{{- block "UnrankedMatch" . }}
+{{- if (len .MatchParticipants | eq 1) }}
+O *{{ (index .MatchParticipants 0).Player.GameName }}#{{ (index .MatchParticipants 0).Player..TagLine }}* jogou
+{{- else }}
+*{{ (index .Players 0).GameName }}#{{(index .Players 0).TagLine}}*
+{{- range (slice .Players 1 (sub (len .Players) 2)) }}
+, *{{ .GameName }}#{{ .TagLine }}*
+{{- end }}
+e {{ (index .Players (sub (len .Players) 1)).GameName }}#{{(index .Players (sub (len .Players) 1)).TagLine}} jogaram
+{{- end }}
+uma {{ ?GAMEMODE? }}!
+{{- end }}
