@@ -1,6 +1,6 @@
 # League of Legends Elo Police
 
-Bot do Whatsapp para informar atualizações nas filas ranqueada dos players cadastrados.
+Bot do Whatsapp para informar atualizações sobre as partidas jogadas dos players cadastrados.
 
 ## Como funciona?
 
