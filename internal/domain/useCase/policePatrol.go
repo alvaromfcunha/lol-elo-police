@@ -77,12 +77,13 @@ func (u PolicePatrol) handleNewMatch(matchId string, players []entity.Player) er
 		return err
 	}
 
+	// make optional via api route (POST /config)
 	allowedQueueIdTypes := []int{
-		int(enum.NormalId),
+		// int(enum.NormalId),
 		int(enum.SoloId),
 		int(enum.FlexId),
-		int(enum.AramId),
-		int(enum.QuickPlayId),
+		// int(enum.AramId),
+		// int(enum.QuickPlayId),
 	}
 	if !slices.Contains(allowedQueueIdTypes, matchInfo.Info.QueueID) {
 		return errors.New("queue id type not supported")
