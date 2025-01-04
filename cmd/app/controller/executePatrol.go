@@ -18,6 +18,7 @@ import (
 
 func ExecutePatrolController(
 	db *sql.DB,
+	riotHttpClient *http.RateLimitedClient,
 	templates *template.Template,
 	whatsmeowClient *whatsmeow.Client,
 ) func(ctx *fiber.Ctx) error {
@@ -46,7 +47,10 @@ func ExecutePatrolController(
 			db,
 		)
 
-		lolApi := http.NewLolApi(riotApiKey)
+		lolApi := http.NewLolApi(
+			riotHttpClient,
+			riotApiKey,
+		)
 
 		whatsappService := whatsapp.NewWhatsappService(whatsmeowClient)
 

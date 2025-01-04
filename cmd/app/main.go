@@ -2,9 +2,11 @@ package main
 
 import (
 	"text/template"
+	"time"
 
 	"github.com/alvaromfcunha/lol-elo-police/cmd/app/controller"
 	"github.com/alvaromfcunha/lol-elo-police/cmd/app/util"
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/http"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron/v3"
@@ -53,19 +55,33 @@ func main() {
 		panic("cannot connect whatsmeow client")
 	}
 
+	// Riot HTTP client with rate limit
+	riotHttpClient := http.NewRateLimitedClient(
+		[]http.RateLimit{
+			{
+				Rate:   20,
+				Window: 1 * time.Second,
+			},
+			{
+				Rate:   100,
+				Window: 2 * time.Minute,
+			},
+		},
+	)
+
 	// Scheduler.
 	cron := cron.New()
 
-	cron.AddFunc("*/1 * * * *", controller.PatrolRoutineController(db, messageTemplates, whatsappClient))
+	cron.AddFunc("*/1 * * * *", controller.PatrolRoutineController(db, riotHttpClient, messageTemplates, whatsappClient))
 
 	cron.Start()
 
 	// API.
 	api := fiber.New()
 
-	api.Post("/players", controller.CreatePlayerController(db))
+	api.Post("/players", controller.CreatePlayerController(db, riotHttpClient))
 	api.Get("/players", controller.GetPlayersController(db))
-	api.Post("/execute/patrol", controller.ExecutePatrolController(db, messageTemplates, whatsappClient))
+	api.Post("/execute/patrol", controller.ExecutePatrolController(db, riotHttpClient, messageTemplates, whatsappClient))
 
 	api.Listen(":3000") // blocking
 }

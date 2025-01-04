@@ -16,14 +16,17 @@ const (
 )
 
 type LolApi struct {
-	ApiKey string
+	client *RateLimitedClient
+	apiKey string
 }
 
 func NewLolApi(
+	client *RateLimitedClient,
 	apiKey string,
 ) LolApi {
 	return LolApi{
-		ApiKey: apiKey,
+		client: client,
+		apiKey: apiKey,
 	}
 }
 
@@ -33,9 +36,9 @@ func (s LolApi) fetch(method string, url string, response any) (err error) {
 		return
 	}
 
-	req.Header.Set("X-Riot-Token", s.ApiKey)
+	req.Header.Set("X-Riot-Token", s.apiKey)
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return
 	}

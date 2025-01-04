@@ -19,6 +19,7 @@ import (
 
 func PatrolRoutineController(
 	db *sql.DB,
+	riotHttpClient *http.RateLimitedClient,
 	templates *template.Template,
 	whatsmeowClient *whatsmeow.Client,
 ) func() {
@@ -50,7 +51,10 @@ func PatrolRoutineController(
 			db,
 		)
 
-		lolApi := http.NewLolApi(riotApiKey)
+		lolApi := http.NewLolApi(
+			riotHttpClient,
+			riotApiKey,
+		)
 
 		whatsappService := whatsapp.NewWhatsappService(whatsmeowClient)
 

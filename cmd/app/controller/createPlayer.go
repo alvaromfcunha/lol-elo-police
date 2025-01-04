@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func CreatePlayerController(db *sql.DB) func(ctx *fiber.Ctx) error {
+func CreatePlayerController(db *sql.DB, riotHttpClient *http.RateLimitedClient) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		riotApiKey, ok := os.LookupEnv("RIOT_API_KEY")
 		if !ok {
@@ -26,7 +26,10 @@ func CreatePlayerController(db *sql.DB) func(ctx *fiber.Ctx) error {
 			ctx.Context(),
 			db,
 		)
-		lolApi := http.NewLolApi(riotApiKey)
+		lolApi := http.NewLolApi(
+			riotHttpClient,
+			riotApiKey,
+		)
 
 		useCase := usecase.CreatePlayer{
 			PlayerRepository:     playerData,
