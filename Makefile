@@ -24,3 +24,16 @@ status:
 
 build:
 	go build -o bin/app cmd/app/main.go && go build -o bin/register cmd/register/main.go
+
+prod:
+	mkdir out
+	mkdir out/bin
+	mkdir out/infrastructure
+	mkdir out/infrastructure/database
+	mkdir out/infrastructure/config
+	mkdir out/infrastructure/template
+	goose -dir infrastructure/database/migrations sqlite3 out/infrastructure/database/app.db up
+	cp infrastructure/database/whatsapp.db out/infrastructure/database/whatsapp.db
+	cp infrastructure/config/.env.example out/infrastructure/config/.env
+	cp infrastructure/template/messages.txt out/infrastructure/template/messages.txt
+	go build -o out/bin/app cmd/app/main.go
