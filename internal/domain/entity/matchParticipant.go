@@ -25,6 +25,7 @@ func NewMatchParticipant(
 	isWin bool,
 ) MatchParticipant {
 	return MatchParticipant{
+		Id:       uuid.New(),
 		Match:    match,
 		Player:   player,
 		Champion: champion,

@@ -37,6 +37,14 @@ func ExecutePatrolController(
 			context,
 			db,
 		)
+		matchData := data.NewMatchData(
+			context,
+			db,
+		)
+		matchParticipantData := data.NewMatchParticipantData(
+			context,
+			db,
+		)
 
 		lolApi := http.NewLolApi(riotApiKey)
 
@@ -47,11 +55,13 @@ func ExecutePatrolController(
 		)
 
 		useCase := usecase.PolicePatrol{
-			PlayerRepository:     playerData,
-			RankedInfoRepository: rankedInfoData,
-			LolService:           lolApi,
-			WhatsappService:      whatsappService,
-			TemplateService:      templateService,
+			PlayerRepository:           playerData,
+			RankedInfoRepository:       rankedInfoData,
+			MatchRepository:            matchData,
+			MatchParticipantRepository: matchParticipantData,
+			LolService:                 lolApi,
+			WhatsappService:            whatsappService,
+			TemplateService:            templateService,
 		}
 
 		handler := api.ExecutePatrolHandler{

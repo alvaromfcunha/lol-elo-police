@@ -15,23 +15,10 @@ func NewTemplateService(templates *template.Template) TemplateService {
 	return TemplateService{templates}
 }
 
-func (s TemplateService) ExecuteNewRankedMatchMessageTemplate(data service.NewRankedMatchData) (text string, err error) {
+func (s TemplateService) ExecuteNewMatchMessageTemplate(data service.NewMatchData) (text string, err error) {
 	var textBuf bytes.Buffer
 
-	err = s.templates.ExecuteTemplate(&textBuf, "NewRankedMatch", data)
-	if err != nil {
-		return
-	}
-
-	text = textBuf.String()
-
-	return
-}
-
-func (s TemplateService) ExecuteNewUnrankedMatchMessageTemplate(data service.NewUnrankedMatchData) (text string, err error) {
-	var textBuf bytes.Buffer
-
-	err = s.templates.ExecuteTemplate(&textBuf, "NewUnrankedMatch", data)
+	err = s.templates.ExecuteTemplate(&textBuf, "NewMatch", data)
 	if err != nil {
 		return
 	}

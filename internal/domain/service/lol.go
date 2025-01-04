@@ -6,9 +6,9 @@ import (
 )
 
 type ILolService interface {
-	GetAccountByRiotId(gameName string, tagLine string) (*account.Account, error)
-	GetLeaguesBySummonerId(id string) ([]*lol.LeagueItem, error)
-	GetSummonerByPuuid(puuid string) (*lol.Summoner, error)
-	GetMatchIdListByPuuid(puuid string) ([]*string, error)
-	GetMatchByMatchId(matchId string) (*lol.Match, error)
+	GetAccountByRiotId(gameName string, tagLine string) (account.Account, error)
+	GetLeaguesBySummonerId(id string) ([]lol.LeagueItem, error)
+	GetSummonerByPuuid(puuid string) (lol.Summoner, error)
+	GetMatchIdListByPuuid(puuid string) ([]string, error)
+	GetMatchByMatchId(matchId string) (lol.Match, error)
 }

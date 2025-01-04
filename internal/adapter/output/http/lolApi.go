@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	AMERICAS_RIOT_URL = "https://americas.api.riotgames.com/riot"
-	BR1_LOL_URL       = "https://br1.api.riotgames.com/lol"
+	AMERICAS_URL = "https://americas.api.riotgames.com"
+	BR1_LOL_URL  = "https://br1.api.riotgames.com/lol"
 )
 
 type LolApi struct {
@@ -53,53 +53,53 @@ func (s LolApi) fetch(method string, url string, response any) (err error) {
 	return
 }
 
-func (s LolApi) GetAccountByRiotId(gameName string, tagLine string) (acc *account.Account, err error) {
-	url := AMERICAS_RIOT_URL +
-		"/account/v1/accounts/by-riot-id/" +
+func (s LolApi) GetAccountByRiotId(gameName string, tagLine string) (acc account.Account, err error) {
+	url := AMERICAS_URL +
+		"/riot/account/v1/accounts/by-riot-id/" +
 		gameName + "/" + tagLine
 
-	err = s.fetch("GET", url, acc)
+	err = s.fetch("GET", url, &acc)
 
 	return
 }
 
-func (s LolApi) GetLeaguesBySummonerId(id string) (lgs []*lol.LeagueItem, err error) {
+func (s LolApi) GetLeaguesBySummonerId(id string) (lgs []lol.LeagueItem, err error) {
 	url := BR1_LOL_URL +
 		"/league/v4/entries/by-summoner/" +
 		id
 
-	err = s.fetch("GET", url, lgs)
+	err = s.fetch("GET", url, &lgs)
 
 	return
 }
 
-func (s LolApi) GetSummonerByPuuid(puuid string) (smm *lol.Summoner, err error) {
+func (s LolApi) GetSummonerByPuuid(puuid string) (smm lol.Summoner, err error) {
 	url := BR1_LOL_URL +
 		"/summoner/v4/summoners/by-puuid/" +
 		puuid
 
-	err = s.fetch("GET", url, smm)
+	err = s.fetch("GET", url, &smm)
 
 	return
 }
 
-func (s LolApi) GetMatchIdListByPuuid(puuid string) (mil []*string, err error) {
-	url := BR1_LOL_URL +
-		"/match/v5/matches/by-puuid/" +
+func (s LolApi) GetMatchIdListByPuuid(puuid string) (mil []string, err error) {
+	url := AMERICAS_URL +
+		"/lol/match/v5/matches/by-puuid/" +
 		puuid +
 		"/ids"
 
-	err = s.fetch("GET", url, mil)
+	err = s.fetch("GET", url, &mil)
 
 	return
 }
 
-func (s LolApi) GetMatchByMatchId(matchId string) (me *lol.Match, err error) {
-	url := BR1_LOL_URL +
-		"/match/v5/matches/" +
+func (s LolApi) GetMatchByMatchId(matchId string) (me lol.Match, err error) {
+	url := AMERICAS_URL +
+		"/lol/match/v5/matches/" +
 		matchId
 
-	err = s.fetch("GET", url, me)
+	err = s.fetch("GET", url, &me)
 
 	return
 }

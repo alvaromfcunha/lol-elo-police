@@ -4,6 +4,7 @@ import (
 	"text/template"
 
 	"github.com/alvaromfcunha/lol-elo-police/cmd/app/controller"
+	"github.com/alvaromfcunha/lol-elo-police/cmd/app/util"
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron/v3"
@@ -29,15 +30,15 @@ func main() {
 	}
 
 	// Template engine.
-	messageTemplates, err := template.ParseFiles("./infrastructure/template/messages.txt")
+	messageTemplates, err := template.New("template").Funcs(util.TemplateFuncMap).ParseFiles("./infrastructure/template/messages.txt")
 	if err != nil {
-		panic("cannot load template file")
+		panic("cannot load template file: " + err.Error())
 	}
 
 	// Whatsapp/Whatsmeow.
 	container, err := sqlstore.New("sqlite3", "file:./infrastructure/database/whatsapp.db?_foreign_keys=on", nil)
 	if err != nil {
-		panic("cannot load whatsmeow store from sqlite file")
+		panic("cannot load whatsmeow store from sqlite file: " + err.Error())
 	}
 	deviceStore, err := container.GetFirstDevice()
 	if err != nil {

@@ -30,7 +30,7 @@ func PatrolRoutineController(
 		}
 
 		ctx := context.Background()
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 		defer cancel()
 
 		playerData := data.NewPlayerData(
@@ -38,6 +38,14 @@ func PatrolRoutineController(
 			db,
 		)
 		rankedInfoData := data.NewRankedInfoData(
+			ctx,
+			db,
+		)
+		matchData := data.NewMatchData(
+			ctx,
+			db,
+		)
+		matchParticipantData := data.NewMatchParticipantData(
 			ctx,
 			db,
 		)
@@ -49,13 +57,14 @@ func PatrolRoutineController(
 		templateService := templateService.NewTemplateService(
 			templates,
 		)
-
 		useCase := usecase.PolicePatrol{
-			PlayerRepository:     playerData,
-			RankedInfoRepository: rankedInfoData,
-			LolService:           lolApi,
-			WhatsappService:      whatsappService,
-			TemplateService:      templateService,
+			PlayerRepository:           playerData,
+			RankedInfoRepository:       rankedInfoData,
+			MatchRepository:            matchData,
+			MatchParticipantRepository: matchParticipantData,
+			LolService:                 lolApi,
+			WhatsappService:            whatsappService,
+			TemplateService:            templateService,
 		}
 
 		handler := cron.PatrolRoutineHandler{

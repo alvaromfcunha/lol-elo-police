@@ -1,6 +1,8 @@
 package data
 
 import (
+	"time"
+
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
@@ -27,5 +29,16 @@ func AssembleRankedInfo(rankedInfo database.RankedInfo, player database.Player) 
 		LeaguePoints: int(rankedInfo.LeaguePoints),
 		Wins:         int(rankedInfo.Wins),
 		Losses:       int(rankedInfo.Losses),
+	}
+}
+
+func AssembleMatch(match database.Match) entity.Match {
+	return entity.Match{
+		Id:             uuid.MustParse(match.ExternalID),
+		MatchId:        match.MatchID,
+		QueueIdType:    int(match.QueueIDType),
+		GameCreationAt: match.GameCreationAt,
+		GameEndedAt:    match.GameEndedAt,
+		GameDuration:   time.Duration(match.GameDuration),
 	}
 }

@@ -64,9 +64,9 @@ func (u CreatePlayer) Execute(input CreatePlayerInput) (output CreatePlayerOutpu
 	for _, league := range leagues {
 		switch league.QueueType {
 		case string(lol.QueueRankedSolo):
-			soloQueue = league
+			soloQueue = &league
 		case string(lol.QueueRankedFlex):
-			flexQueue = league
+			flexQueue = &league
 		}
 	}
 
@@ -88,7 +88,7 @@ func (u CreatePlayer) Execute(input CreatePlayerInput) (output CreatePlayerOutpu
 			soloQueue.Losses,
 		)
 
-		err = u.RankedInfoRepository.Create(soloQueueInfo, player)
+		err = u.RankedInfoRepository.Create(soloQueueInfo)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "cannot solo queue info on database:", err)
 			err = errors.New("cannot solo queue info on database")
@@ -106,7 +106,7 @@ func (u CreatePlayer) Execute(input CreatePlayerInput) (output CreatePlayerOutpu
 			flexQueue.Losses,
 		)
 
-		err = u.RankedInfoRepository.Create(flexQueueInfo, player)
+		err = u.RankedInfoRepository.Create(flexQueueInfo)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "cannot flex queue info on database:", err)
 			err = errors.New("cannot flex queue info on database")

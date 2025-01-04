@@ -3,9 +3,12 @@ package data
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
+	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
+	"github.com/mattn/go-sqlite3"
 )
 
 type PlayerData struct {
@@ -32,18 +35,32 @@ func (r PlayerData) Create(player entity.Player) error {
 		},
 	)
 
-	return err
+	switch err := err.(type) {
+	case nil:
+		break
+	case sqlite3.Error:
+		if err.Code == 19 {
+			return repository.ErrPlayerAlreadyExists
+		}
+	default:
+		fmt.Println("Cannot create match:", err.Error())
+		return repository.ErrCannotCreatePlayer
+	}
+
+	return nil
 }
 
-func (r PlayerData) GetAll() (player []entity.Player, err error) {
+func (r PlayerData) GetAll() ([]entity.Player, error) {
 	records, err := r.Queries.GetPlayers(r.Ctx)
+
+	var players []entity.Player
 	if err != nil {
-		return
+		return players, repository.ErrCannotGetPlayer
 	}
 
 	for _, record := range records {
-		player = append(player, AssemblePlayer(record.Player))
+		players = append(players, AssemblePlayer(record.Player))
 	}
 
-	return
+	return players, nil
 }

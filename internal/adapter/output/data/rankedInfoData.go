@@ -6,6 +6,7 @@ import (
 
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
+	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
 )
 
@@ -21,12 +22,12 @@ func NewRankedInfoData(ctx context.Context, db *sql.DB) RankedInfoData {
 	}
 }
 
-func (r RankedInfoData) Create(rankedInfo entity.RankedInfo, player entity.Player) error {
+func (r RankedInfoData) Create(rankedInfo entity.RankedInfo) error {
 	_, err := r.Queries.CreateRankedInfo(
 		r.Ctx,
 		database.CreateRankedInfoParams{
 			ExternalID:       rankedInfo.Id.String(),
-			PlayerExternalID: player.Id.String(),
+			PlayerExternalID: rankedInfo.Player.Id.String(),
 			QueueType:        string(rankedInfo.QueueType),
 			Tier:             string(rankedInfo.Tier),
 			Rank:             string(rankedInfo.Rank),
@@ -36,7 +37,11 @@ func (r RankedInfoData) Create(rankedInfo entity.RankedInfo, player entity.Playe
 		},
 	)
 
-	return err
+	if err != nil {
+		return repository.ErrCannotCreateRankedInfo
+	}
+
+	return nil
 }
 
 func (r RankedInfoData) Update(rankedInfo entity.RankedInfo) error {
@@ -52,7 +57,11 @@ func (r RankedInfoData) Update(rankedInfo entity.RankedInfo) error {
 		},
 	)
 
-	return err
+	if err != nil {
+		return repository.ErrCannotUpdateRankedInfo
+	}
+
+	return nil
 }
 
 func (r RankedInfoData) GetByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error) {
@@ -65,8 +74,11 @@ func (r RankedInfoData) GetByPlayerAndQueueType(player entity.Player, queueType 
 			QueueType:        string(queueType),
 		},
 	)
-	if err != nil {
-		return rankedInfo, err
+
+	if err == sql.ErrNoRows {
+		return rankedInfo, repository.ErrNoRankedInfoFound
+	} else if err != nil {
+		return rankedInfo, repository.ErrCannotGetRankedInfo
 	}
 
 	rankedInfo = AssembleRankedInfo(record.RankedInfo, record.Player)

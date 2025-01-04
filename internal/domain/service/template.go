@@ -5,23 +5,17 @@ import (
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 )
 
-type MatchParticipantWithRankedInfo struct {
+type MatchParticipantEvent struct {
 	MatchParticipant entity.MatchParticipant
-	RankedInfo       entity.RankedInfo
+	RankedInfo       *entity.RankedInfo
 	LeagueItem       *lol.LeagueItem
 }
 
-type NewRankedMatchData struct {
-	Match                           entity.Match
-	MatchParticipantsWithLeagueItem []MatchParticipantWithRankedInfo
-}
-
-type NewUnrankedMatchData struct {
-	Match             entity.Match
-	MatchParticipants []entity.MatchParticipant
+type NewMatchData struct {
+	Match                  entity.Match
+	MatchParticipantEvents []MatchParticipantEvent
 }
 
 type ITemplateService interface {
-	ExecuteNewRankedMatchMessageTemplate(data NewRankedMatchData) (string, error)
-	ExecuteNewUnrankedMatchMessageTemplate(data NewUnrankedMatchData) (string, error)
+	ExecuteNewMatchMessageTemplate(data NewMatchData) (string, error)
 }
