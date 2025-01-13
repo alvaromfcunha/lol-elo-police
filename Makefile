@@ -8,6 +8,7 @@ deregister:
 	rm db/wpp.db
 
 sqlc:
+	rm -rf internal/generated/database
 	sqlc generate -f infrastructure/database/sqlc.yml
 
 migration:

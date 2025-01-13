@@ -7,7 +7,8 @@ INSERT INTO ranked_info (
     rank,
     league_points,
     wins,
-    losses
+    losses,
+    created_at
 ) VALUES (
     @external_id,
     (SELECT player.id FROM player WHERE player.external_id = @player_external_id),
@@ -16,7 +17,8 @@ INSERT INTO ranked_info (
     @rank,
     @league_points,
     @wins,
-    @losses
+    @losses,
+    @created_at
 ) RETURNING *;
 
 -- name: UpdateRankedInfo :exec
@@ -31,7 +33,7 @@ SET
 WHERE
     external_id = @external_id;
 
--- name: GetByPlayerExternalIdAndQueueType :one
+-- name: GetRankedInfoByPlayerExternalIdAndQueueType :one
 SELECT
     sqlc.embed(ranked_info),
     sqlc.embed(player)
@@ -44,3 +46,20 @@ ON
 WHERE
     player_id = (SELECT player.id FROM player WHERE player.external_id = @player_external_id)
     AND queue_type = @queue_type;
+
+-- name: GetLatestRankedInfoByPlayerAndQueueType :one
+SELECT
+    sqlc.embed(ranked_info),
+    sqlc.embed(player)
+FROM
+    ranked_info
+INNER JOIN
+    player
+ON
+    ranked_info.player_id = player.id
+WHERE
+    player_id = (SELECT player.id FROM player WHERE player.external_id = @player_external_id)
+    AND queue_type = @queue_type
+ORDER BY
+    ranked_info.created_at DESC
+LIMIT 1;

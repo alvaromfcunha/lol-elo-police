@@ -5,6 +5,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/KnutZuidema/golio/riot/lol"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
@@ -27,69 +28,109 @@ func (u PolicePatrol) Execute() error {
 		return errors.New("cannot get all players on database")
 	}
 
-	type checkPlayerHasNewMatch struct {
-		Player     entity.Player
-		IsNewMatch bool
-		MatchId    string
-		Err        error
-	}
+	var errs error
 
-	checkPlayersChannel := make(chan checkPlayerHasNewMatch, len(players))
+	type getPlayerLastRemoteMatchReturn struct {
+		Player entity.Player
+		MatchId string
+		Err     error
+	}
+	matchIdChan := make(chan getPlayerLastRemoteMatchReturn, len(players))
 	for _, player := range players {
-		go func(player entity.Player, channel chan checkPlayerHasNewMatch) {
-			isNewMatch, matchId, err := u.checkPlayerHasNewMatch(player)
-			channel <- checkPlayerHasNewMatch{player, isNewMatch, matchId, err}
-		}(player, checkPlayersChannel)
+		go func(player entity.Player, channel chan getPlayerLastRemoteMatchReturn) {
+			matchId, err := u.getPlayerLastRemoteMatch(player)
+			channel <- getPlayerLastRemoteMatchReturn{player, matchId, err}
+		}(player, matchIdChan)
 	}
 
-	results := make([]checkPlayerHasNewMatch, len(players))
-	for i := range players {
-		results[i] = <-checkPlayersChannel
-		err = errors.Join(err, results[i].Err)
-	}
-
-	matchPlayersMap := make(map[string][]entity.Player)
-	for _, result := range results {
-		if !result.IsNewMatch || result.Err != nil {
-			continue
+	matchPlayersMap := map[string][]entity.Player{}
+	for range players {
+		r := <-matchIdChan
+		if r.MatchId != "" {
+			matchPlayersMap[r.MatchId] = append(matchPlayersMap[r.MatchId], r.Player)
 		}
-
-		matchPlayersMap[result.MatchId] = append(matchPlayersMap[result.MatchId], result.Player)
+		errs = errors.Join(errs, r.Err)
 	}
 
-	newMatchesChannel := make(chan error, len(matchPlayersMap))
+	type createEntitiesReturn struct {
+		Match             entity.Match
+		MatchParticipants []entity.MatchParticipant
+		Err             error
+	}
+	entitiesChan := make(chan createEntitiesReturn, len(matchPlayersMap))
 	for matchId, players := range matchPlayersMap {
-		go func(matchId string, players []entity.Player, channel chan error) {
-			channel <- u.handleNewMatch(matchId, players)
-		}(matchId, players, newMatchesChannel)
+		go func(channel chan createEntitiesReturn, matchId string, players []entity.Player) {
+			match, participants, err := u.createEntries(matchId, players)
+			channel <- createEntitiesReturn{match, participants, err}
+		}(entitiesChan, matchId, players)
 	}
 
-	for i := 0; i < len(matchPlayersMap); i++ {
-		err = errors.Join(err, <-newMatchesChannel)
+	messagesChan := make(chan error, len(matchPlayersMap))
+	for range matchPlayersMap {
+		r := <-entitiesChan
+		errs = errors.Join(errs, r.Err)
+		go func(channel chan error, match entity.Match, participants []entity.MatchParticipant) {
+			channel <- u.sendMessage(match, participants)
+		}(messagesChan, r.Match, r.MatchParticipants)
 	}
 
-	return err
+	for range matchPlayersMap {
+		errors.Join(errs, <-messagesChan)
+	}
+
+	return errs
 }
 
-func (u PolicePatrol) handleNewMatch(matchId string, players []entity.Player) error {
+func (u PolicePatrol) getPlayerLastRemoteMatch(player entity.Player) (string, error) {
+	matchIds, err := u.LolService.GetMatchIdListByPuuid(player.Puuid)
+	if err != nil {
+		return "", err
+	}
+
+	if len(matchIds) == 0 {
+		return "", nil
+	}
+
+	remoteLatestMatchId := matchIds[0]
+
+	latestMatch, err := u.MatchRepository.GetLastestByPlayer(player)
+	switch err {
+	case nil:
+		break
+	case repository.ErrMatchNotFound:
+		return remoteLatestMatchId, nil
+	default:
+		return "", err
+	}
+
+	if remoteLatestMatchId == latestMatch.MatchId {
+		return "", nil
+	}
+
+	return remoteLatestMatchId, nil
+}
+
+func (u PolicePatrol) createEntries(matchId string, players []entity.Player) (entity.Match, []entity.MatchParticipant, error) {
+	var match entity.Match
+	var participants []entity.MatchParticipant
+
 	matchInfo, err := u.LolService.GetMatchByMatchId(matchId)
 	if err != nil {
-		return err
+		return match, participants, err
 	}
 
-	// make optional via api route (POST /config)
 	allowedQueueIdTypes := []int{
-		// int(enum.NormalId),
+		int(enum.NormalId),
 		int(enum.SoloId),
 		int(enum.FlexId),
-		// int(enum.AramId),
-		// int(enum.QuickPlayId),
+		int(enum.AramId),
+		int(enum.QuickPlayId),
 	}
 	if !slices.Contains(allowedQueueIdTypes, matchInfo.Info.QueueID) {
-		return errors.New("queue id type not supported")
+		return match, participants, errors.New("queue id type not supported")
 	}
 
-	matchEntity := entity.NewMatch(
+	match = entity.NewMatch(
 		matchId,
 		matchInfo.Info.QueueID,
 		matchInfo.Info.GameCreation,
@@ -97,23 +138,57 @@ func (u PolicePatrol) handleNewMatch(matchId string, players []entity.Player) er
 		matchInfo.Info.GameDuration,
 	)
 
-	err = u.MatchRepository.Create(matchEntity)
+	err = u.MatchRepository.Create(match)
 	if err == repository.ErrMatchAlreadyExists {
-		matchEntity, err = u.MatchRepository.GetByMatchId(matchId)
+		match, err = u.MatchRepository.GetByMatchId(matchId)
 		if err != nil {
-			return err
+			return match, participants, err
 		}
 	} else if err != nil {
-		return err
+		return match, participants, err
 	}
 
-	var matchParticipantEntities []entity.MatchParticipant
+	var errs error
 	for _, participant := range matchInfo.Info.Participants {
 		for _, player := range players {
 			if participant.PUUID == player.Puuid {
-				matchParticipantEntity := entity.NewMatchParticipant(
-					matchEntity,
+
+				var newRankedInfo *entity.RankedInfo
+				var prevRankedInfo *entity.RankedInfo
+				if match.QueueIdType == int(enum.SoloId) || match.QueueIdType == int(enum.FlexId) {
+					queueType := enum.QueueIdTypeMap[enum.QueueId(match.QueueIdType)]
+
+					if ori, err := u.RankedInfoRepository.GetLatestByPlayerAndQueueType(player, queueType); err == nil {
+						prevRankedInfo = &ori
+					}
+
+					leagueItem, err := u.getPlayerRankedInfo(player, queueType)
+					errs = errors.Join(errs, err)
+
+					if leagueItem != nil {
+						nri := entity.NewRankedInfo(
+							player,
+							enum.QueueType(leagueItem.QueueType),
+							leagueItem.Tier,
+							leagueItem.Rank,
+							leagueItem.LeaguePoints,
+							leagueItem.Wins,
+							leagueItem.Losses,
+						)
+
+						if err := u.RankedInfoRepository.Create(nri); err == nil {
+							newRankedInfo = &nri
+						} else {
+							errs = errors.Join(errs, err)
+						}
+					}
+				}
+
+				participant := entity.NewMatchParticipant(
+					match,
 					player,
+					newRankedInfo,
+					prevRankedInfo,
 					participant.ChampionName,
 					participant.Lane,
 					participant.Kills,
@@ -122,59 +197,38 @@ func (u PolicePatrol) handleNewMatch(matchId string, players []entity.Player) er
 					participant.Win,
 				)
 
-				err = errors.Join(err, u.MatchParticipantRepository.Create(matchParticipantEntity))
+				errs = errors.Join(errs, u.MatchParticipantRepository.Create(participant))
 
-				matchParticipantEntities = append(matchParticipantEntities, matchParticipantEntity)
+				participants = append(participants, participant)
 			}
 		}
 	}
 
-	if len(matchParticipantEntities) == 0 {
-		return errors.New("cant match player puuid with match participant puuid on match data")
+	return match, participants, errs
+}
+
+func (u PolicePatrol) getPlayerRankedInfo(player entity.Player, queueType enum.QueueType) (*lol.LeagueItem, error) {
+	lis, err := u.LolService.GetLeaguesBySummonerId(player.SummonerId)
+	if err != nil {
+		return nil, err
 	}
 
-	queueIdTypeMap := map[enum.QueueId]enum.QueueType{
-		enum.SoloId: enum.Solo,
-		enum.FlexId: enum.Flex,
+	idx := slices.IndexFunc(lis, func(li lol.LeagueItem) bool {
+		return li.QueueType == string(queueType)
+	})
+	if idx == -1 {
+		return nil, nil
 	}
 
-	matchParticipantEvents := make([]service.MatchParticipantEvent, len(matchParticipantEntities))
-	for idx, matchParticipant := range matchParticipantEntities {
-		matchParticipantEvent := service.MatchParticipantEvent{
-			MatchParticipant: matchParticipant,
-		}
+	return &lis[idx], nil
+}
 
-		if matchInfo.Info.QueueID == int(enum.SoloId) || matchInfo.Info.QueueID == int(enum.FlexId) {
-			leagues, err := u.LolService.GetLeaguesBySummonerId(matchParticipant.Player.SummonerId)
-			if err != nil {
-				return err
-			}
-			for _, league := range leagues {
-				if enum.QueueType(league.QueueType) == queueIdTypeMap[enum.QueueId(matchInfo.Info.QueueID)] {
-					matchParticipantEvent.LeagueItem = &league
-					break
-				}
-			}
+func (u PolicePatrol) sendMessage(match entity.Match, participants []entity.MatchParticipant) error {
+	filteredParticipants := slices.DeleteFunc(participants, func (p entity.MatchParticipant) bool {
+		return !slices.Contains(p.Player.NotifyQueues, enum.QueueId(match.QueueIdType))
+	})
 
-			rankedInfo, err := u.RankedInfoRepository.GetByPlayerAndQueueType(
-				matchParticipant.Player,
-				queueIdTypeMap[enum.QueueId(matchInfo.Info.QueueID)],
-			)
-			if err == nil {
-				matchParticipantEvent.RankedInfo = &rankedInfo
-			}
-
-		}
-
-		matchParticipantEvents[idx] = matchParticipantEvent
-	}
-
-	templateData := service.NewMatchData{
-		Match:                  matchEntity,
-		MatchParticipantEvents: matchParticipantEvents,
-	}
-
-	message, err := u.TemplateService.ExecuteNewMatchMessageTemplate(templateData)
+	message, err := u.TemplateService.ExecuteNewMatchMessageTemplate(match, filteredParticipants)
 	if err != nil {
 		return err
 	}
@@ -185,62 +239,5 @@ func (u PolicePatrol) handleNewMatch(matchId string, players []entity.Player) er
 		return errors.New("cannot send message to whatsapp group")
 	}
 
-	for _, matchParticipantEvent := range matchParticipantEvents {
-		if matchParticipantEvent.LeagueItem != nil && matchParticipantEvent.RankedInfo != nil {
-			matchParticipantEvent.RankedInfo.LeaguePoints = matchParticipantEvent.LeagueItem.LeaguePoints
-			matchParticipantEvent.RankedInfo.Rank = matchParticipantEvent.LeagueItem.Rank
-			matchParticipantEvent.RankedInfo.Tier = matchParticipantEvent.LeagueItem.Tier
-			matchParticipantEvent.RankedInfo.Wins = matchParticipantEvent.LeagueItem.Wins
-			matchParticipantEvent.RankedInfo.Losses = matchParticipantEvent.LeagueItem.Losses
-
-			if _err := u.RankedInfoRepository.Update(*matchParticipantEvent.RankedInfo); _err != nil {
-				err = errors.Join(err, _err)
-			}
-		} else if matchParticipantEvent.LeagueItem != nil && matchParticipantEvent.RankedInfo == nil {
-			newRankedInfo := entity.NewRankedInfo(
-				matchParticipantEvent.MatchParticipant.Player,
-				enum.QueueType(matchParticipantEvent.LeagueItem.QueueType),
-				matchParticipantEvent.LeagueItem.Tier,
-				matchParticipantEvent.LeagueItem.Rank,
-				matchParticipantEvent.LeagueItem.LeaguePoints,
-				matchParticipantEvent.LeagueItem.Wins,
-				matchParticipantEvent.LeagueItem.Losses,
-			)
-
-			if _err := u.RankedInfoRepository.Create(newRankedInfo); _err != nil {
-				err = errors.Join(err, _err)
-			}
-		}
-	}
-
-	return err
-}
-
-func (u PolicePatrol) checkPlayerHasNewMatch(player entity.Player) (bool, string, error) {
-	matchIds, err := u.LolService.GetMatchIdListByPuuid(player.Puuid)
-	if err != nil {
-		return false, "", err
-	}
-
-	if len(matchIds) == 0 {
-		return false, "", nil
-	}
-
-	remoteLatestMatchId := matchIds[0]
-
-	latestMatch, err := u.MatchRepository.GetLastestByPlayer(player)
-	switch err {
-	case nil:
-		break
-	case repository.ErrMatchNotFound:
-		return true, remoteLatestMatchId, nil
-	default:
-		return false, "", err
-	}
-
-	if remoteLatestMatchId == latestMatch.MatchId {
-		return false, "", nil
-	}
-
-	return true, remoteLatestMatchId, nil
+	return nil
 }

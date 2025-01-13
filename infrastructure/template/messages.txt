@@ -1,15 +1,15 @@
 {{ block "NewMatch" . -}}
-{{ template "playerList" .MatchParticipantEvents }} {{ template "queueType" .Match.QueueIdType }}!
+{{ template "playerList" .Participants }} {{ template "queueType" .Match.QueueIdType }}!
 {{- template "matchParticipantsInfo" . }}
 {{- end }}
 
 {{ define "playerList" -}}
     {{ if (len . | eq 1) -}}
-        *{{ (index . 0).MatchParticipant.Player.GameName }}#{{ (index . 0).MatchParticipant.Player.TagLine }}* jogou
+        *{{ (index . 0).Player.GameName }}#{{ (index . 0).Player.TagLine }}* jogou
     {{- else if (len . | eq 2) -}}
-        *{{ (index . 0).MatchParticipant.Player.GameName }}#{{ (index . 0).MatchParticipant.Player.TagLine }}* e *{{ (index . 1).MatchParticipant.Player.GameName }}#{{ (index . 1).MatchParticipant.Player.TagLine }}* jogaram
+        *{{ (index . 0).Player.GameName }}#{{ (index . 0).Player.TagLine }}* e *{{ (index . 1).Player.GameName }}#{{ (index . 1).Player.TagLine }}* jogaram
     {{- else -}}
-        *{{ (index . 0).MatchParticipant.Player.GameName }}#{{ (index . 0).MatchParticipant.Player.TagLine }}*{{ range (slice . 1 (sub (len .) 1))}}, *{{ .MatchParticipant.Player.GameName }}#{{ .MatchParticipant.Player.TagLine }}*{{ end }} e *{{ (index . (sub (len .) 1)).MatchParticipant.Player.GameName }}#{{ (index . (sub (len .) 1)).MatchParticipant.Player.TagLine }}* jogaram
+        *{{ (index . 0).Player.GameName }}#{{ (index . 0).Player.TagLine }}*{{ range (slice . 1 (sub (len .) 1))}}, *{{ .Player.GameName }}#{{ .Player.TagLine }}*{{ end }} e *{{ (index . (sub (len .) 1)).Player.GameName }}#{{ (index . (sub (len .) 1)).Player.TagLine }}* jogaram
     {{- end }}
 {{- end }}
 
@@ -30,28 +30,28 @@
 {{- end }}
 
 {{ define "matchParticipantsInfo" }}
-{{ range .MatchParticipantEvents }}
-{{ template "gameResult" .MatchParticipant.IsWin }}
-*{{ .MatchParticipant.Player.GameName }}#{{ .MatchParticipant.Player.TagLine }}*:
-  Posição: *{{ .MatchParticipant.Role }}*
-  Campeão: *{{ .MatchParticipant.Champion }}*
-  KDA: *{{ .MatchParticipant.Kills }}/{{ .MatchParticipant.Deaths }}/{{ .MatchParticipant.Assists }}*
+{{ range .Participants }}
+{{ template "gameResult" .IsWin }}
+*{{ .Player.GameName }}#{{ .Player.TagLine }}*:
+  Posição: *{{ .Role }}*
+  Campeão: *{{ .Champion }}*
+  KDA: *{{ .Kills }}/{{ .Deaths }}/{{ .Assists }}*
   {{- template "matchParticipantRankedInfo" . }}
 
-https://www.deeplol.gg/summoner/BR/{{ trimgn .MatchParticipant.Player.GameName }}-{{ .MatchParticipant.Player.TagLine }}/matches/{{ $.Match.MatchId }}
+https://www.deeplol.gg/summoner/BR/{{ trimgn .Player.GameName }}-{{ .Player.TagLine }}/matches/{{ $.Match.MatchId }}
 {{ end }}
 {{- end }}
 
 {{ define "matchParticipantRankedInfo" -}}
-{{ if and .RankedInfo .LeagueItem }}
-  Elo: *{{ .RankedInfo.Tier }}* *{{ .RankedInfo.Rank }}* -> *{{ .LeagueItem.Tier }}* *{{ .LeagueItem.Rank }}*
-  PDLs: *{{ .RankedInfo.LeaguePoints }}* -> *{{ .LeagueItem.LeaguePoints }}*
-  Placar: *{{ .RankedInfo.Wins }}W* *{{ .RankedInfo.Losses }}L* -> *{{ .LeagueItem.Wins }}W* *{{ .LeagueItem.Losses }}L*
-{{- else if .LeagueItem }}
+{{ if and .NewRankedInfo .PrevRankedInfo }}
+  Elo: *{{ .PrevRankedInfo.Tier }}* *{{ .PrevRankedInfo.Rank }}* -> *{{ .NewRankedInfo.Tier }}* *{{ .NewRankedInfo.Rank }}*
+  PDLs: *{{ .PrevRankedInfo.LeaguePoints }}* -> *{{ .NewRankedInfo.LeaguePoints }}*
+  Placar: *{{ .PrevRankedInfo.Wins }}W* *{{ .PrevRankedInfo.Losses }}L* -> *{{ .NewRankedInfo.Wins }}W* *{{ .NewRankedInfo.Losses }}L*
+{{- else if .NewRankedInfo }}
   *Terminou a MD5!*
-  Elo: *{{ .LeagueItem.Tier }}* *{{ .LeagueItem.Rank }}*
-  PDLs: *{{ .LeagueItem.LeaguePoints }}*
-  Placar: *{{ .LeagueItem.Wins }}W* *{{ .LeagueItem.Losses }}L*
+  Elo: *{{ .NewRankedInfo.Tier }}* *{{ .NewRankedInfo.Rank }}*
+  PDLs: *{{ .NewRankedInfo.LeaguePoints }}*
+  Placar: *{{ .NewRankedInfo.Wins }}W* *{{ .NewRankedInfo.Losses }}L*
 {{- end }}
 {{- end }}
 

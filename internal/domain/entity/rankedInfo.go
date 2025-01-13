@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/google/uuid"
 )
@@ -14,6 +16,7 @@ type RankedInfo struct {
 	LeaguePoints int            `json:"leaguePoints"`
 	Wins         int            `json:"wins"`
 	Losses       int            `json:"losses"`
+	CreatedAt    time.Time      `json:"createdAt"`
 }
 
 func NewRankedInfo(
@@ -34,5 +37,6 @@ func NewRankedInfo(
 		LeaguePoints: leaguePoints,
 		Wins:         wins,
 		Losses:       losses,
+		CreatedAt:    time.Now(),
 	}
 }

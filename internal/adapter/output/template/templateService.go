@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/alvaromfcunha/lol-elo-police/internal/domain/service"
+	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 )
 
 type TemplateService struct {
@@ -15,10 +15,14 @@ func NewTemplateService(templates *template.Template) TemplateService {
 	return TemplateService{templates}
 }
 
-func (s TemplateService) ExecuteNewMatchMessageTemplate(data service.NewMatchData) (text string, err error) {
+func (s TemplateService) ExecuteNewMatchMessageTemplate(match entity.Match, participants []entity.MatchParticipant) (text string, err error) {
 	var textBuf bytes.Buffer
 
-	err = s.templates.ExecuteTemplate(&textBuf, "NewMatch", data)
+	type newMatchTemplateData struct {
+		Match entity.Match
+		Participants []entity.MatchParticipant
+	}
+	err = s.templates.ExecuteTemplate(&textBuf, "NewMatch", newMatchTemplateData{match, participants})
 	if err != nil {
 		return
 	}

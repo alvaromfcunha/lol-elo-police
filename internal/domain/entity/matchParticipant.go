@@ -6,6 +6,8 @@ type MatchParticipant struct {
 	Id       uuid.UUID
 	Match    Match
 	Player   Player
+	NewRankedInfo *RankedInfo
+	PrevRankedInfo *RankedInfo
 	Champion string
 	Role     string
 	Kills    int
@@ -17,6 +19,8 @@ type MatchParticipant struct {
 func NewMatchParticipant(
 	match Match,
 	player Player,
+	newRankedInfo *RankedInfo,
+	prevRankedInfo *RankedInfo,
 	champion string,
 	role string,
 	kills int,
@@ -28,6 +32,8 @@ func NewMatchParticipant(
 		Id:       uuid.New(),
 		Match:    match,
 		Player:   player,
+		NewRankedInfo: newRankedInfo,
+		PrevRankedInfo: prevRankedInfo,
 		Champion: champion,
 		Role:     role,
 		Kills:    kills,

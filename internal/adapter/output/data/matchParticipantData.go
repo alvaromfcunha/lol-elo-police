@@ -23,18 +23,27 @@ func NewMatchParticipantData(ctx context.Context, db *sql.DB) MatchParticipantDa
 }
 
 func (d MatchParticipantData) Create(mp entity.MatchParticipant) error {
+	params := database.CreateMatchParticipantParams{
+		ExternalID:        mp.Id.String(),
+		PlayerExternalID:  mp.Player.Id.String(),
+		MatchesExternalID: mp.Match.Id.String(),
+		Champion:          mp.Champion,
+		Kills:             int64(mp.Kills),
+		Deaths:            int64(mp.Deaths),
+		Assists:           int64(mp.Assists),
+		IsWin:             mp.IsWin,
+	}
+
+	if mp.NewRankedInfo != nil {
+		params.NewRankedInfoExternalID = mp.NewRankedInfo.Id.String()
+	}
+	if mp.PrevRankedInfo != nil {
+		params.PrevRankedInfoExternalID = mp.PrevRankedInfo.Id.String()
+	}
+
 	_, err := d.Queries.CreateMatchParticipant(
 		d.Ctx,
-		database.CreateMatchParticipantParams{
-			ExternalID:        mp.Id.String(),
-			PlayerExternalID:  mp.Player.Id.String(),
-			MatchesExternalID: mp.Match.Id.String(),
-			Champion:          mp.Champion,
-			Kills:             int64(mp.Kills),
-			Deaths:            int64(mp.Deaths),
-			Assists:           int64(mp.Assists),
-			IsWin:             mp.IsWin,
-		},
+		params,
 	)
 
 	if err != nil {

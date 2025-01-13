@@ -26,15 +26,25 @@ func CreatePlayerController(db *sql.DB, riotHttpClient *http.RateLimitedClient) 
 			ctx.Context(),
 			db,
 		)
+		matchData := data.NewMatchData(
+			ctx.Context(),
+			db,
+		)
+		matchParticipantData := data.NewMatchParticipantData(
+			ctx.Context(),
+			db,
+		)
 		lolApi := http.NewLolApi(
 			riotHttpClient,
 			riotApiKey,
 		)
 
 		useCase := usecase.CreatePlayer{
-			PlayerRepository:     playerData,
-			RankedInfoRepository: rankedInfoData,
-			LolService:           lolApi,
+			PlayerRepository:           playerData,
+			RankedInfoRepository:       rankedInfoData,
+			MatchRepository:            matchData,
+			MatchParticipantRepository: matchParticipantData,
+			LolService:                 lolApi,
 		}
 
 		handler := api.CreatePlayerHandler{

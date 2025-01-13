@@ -14,6 +14,6 @@ var ErrNoRankedInfoFound = errors.New("no ranked info found")
 
 type IRankedInfoRepository interface {
 	Create(rankedInfo entity.RankedInfo) error
-	Update(rankedInfo entity.RankedInfo) error
 	GetByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error)
+	GetLatestByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error)
 }

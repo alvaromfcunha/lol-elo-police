@@ -1,6 +1,8 @@
 package data
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
@@ -10,12 +12,21 @@ import (
 )
 
 func AssemblePlayer(player database.Player) entity.Player {
+	nqss := strings.Split(player.NotifyQueues, ",")
+	nqs := make([]enum.QueueId, len(nqss))
+	for idx, q := range nqss {
+		if qi, err := strconv.Atoi(q); err == nil {
+			nqs[idx] = enum.QueueId(qi)
+		}
+	}
+
 	return entity.Player{
-		Id:         uuid.MustParse(player.ExternalID),
-		SummonerId: player.SummonerID,
-		Puuid:      player.Puuid,
-		GameName:   player.GameName,
-		TagLine:    player.TagLine,
+		Id:           uuid.MustParse(player.ExternalID),
+		SummonerId:   player.SummonerID,
+		Puuid:        player.Puuid,
+		GameName:     player.GameName,
+		TagLine:      player.TagLine,
+		NotifyQueues: nqs,
 	}
 }
 

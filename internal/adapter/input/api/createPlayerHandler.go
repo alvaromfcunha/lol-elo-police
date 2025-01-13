@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	usecase "github.com/alvaromfcunha/lol-elo-police/internal/domain/useCase"
 	"github.com/gofiber/fiber/v2"
 )
@@ -10,8 +11,9 @@ type CreatePlayerHandler struct {
 }
 
 type CreatePlayerRequest struct {
-	GameName string `json:"name"`
-	TagLine  string `json:"tag"`
+	GameName     string         `json:"name"`
+	TagLine      string         `json:"tag"`
+	NotifyQueues []enum.QueueId `json:"notifyQueues"`
 }
 
 func (h CreatePlayerHandler) Handle(ctx *fiber.Ctx) error {
@@ -24,6 +26,7 @@ func (h CreatePlayerHandler) Handle(ctx *fiber.Ctx) error {
 	input := usecase.CreatePlayerInput{
 		GameName: request.GameName,
 		TagLine:  request.TagLine,
+		NotifyQueues: request.NotifyQueues,
 	}
 
 	output, err := h.UseCase.Execute(input)

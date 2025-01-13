@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
@@ -24,6 +26,11 @@ func NewPlayerData(ctx context.Context, db *sql.DB) PlayerData {
 }
 
 func (r PlayerData) Create(player entity.Player) error {
+	nqs := make([]string, len(player.NotifyQueues))
+	for idx, q := range player.NotifyQueues {
+		nqs[idx] = strconv.Itoa(int(q))
+	}
+
 	_, err := r.Queries.CreatePlayer(
 		r.Ctx,
 		database.CreatePlayerParams{
@@ -32,6 +39,7 @@ func (r PlayerData) Create(player entity.Player) error {
 			Puuid:      player.Puuid,
 			GameName:   player.GameName,
 			TagLine:    player.TagLine,
+			NotifyQueues: strings.Join(nqs, ","),
 		},
 	)
 

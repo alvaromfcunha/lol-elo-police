@@ -34,6 +34,7 @@ func (r RankedInfoData) Create(rankedInfo entity.RankedInfo) error {
 			LeaguePoints:     int64(rankedInfo.LeaguePoints),
 			Wins:             int64(rankedInfo.Wins),
 			Losses:           int64(rankedInfo.Losses),
+			CreatedAt:        rankedInfo.CreatedAt,
 		},
 	)
 
@@ -67,9 +68,31 @@ func (r RankedInfoData) Update(rankedInfo entity.RankedInfo) error {
 func (r RankedInfoData) GetByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error) {
 	var rankedInfo entity.RankedInfo
 
-	record, err := r.Queries.GetByPlayerExternalIdAndQueueType(
+	record, err := r.Queries.GetRankedInfoByPlayerExternalIdAndQueueType(
 		r.Ctx,
-		database.GetByPlayerExternalIdAndQueueTypeParams{
+		database.GetRankedInfoByPlayerExternalIdAndQueueTypeParams{
+			PlayerExternalID: player.Id.String(),
+			QueueType:        string(queueType),
+		},
+	)
+
+	if err == sql.ErrNoRows {
+		return rankedInfo, repository.ErrNoRankedInfoFound
+	} else if err != nil {
+		return rankedInfo, repository.ErrCannotGetRankedInfo
+	}
+
+	rankedInfo = AssembleRankedInfo(record.RankedInfo, record.Player)
+
+	return rankedInfo, nil
+}
+
+func (r RankedInfoData) GetLatestByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error) {
+	var rankedInfo entity.RankedInfo
+
+	record, err := r.Queries.GetLatestRankedInfoByPlayerAndQueueType(
+		r.Ctx,
+		database.GetLatestRankedInfoByPlayerAndQueueTypeParams{
 			PlayerExternalID: player.Id.String(),
 			QueueType:        string(queueType),
 		},

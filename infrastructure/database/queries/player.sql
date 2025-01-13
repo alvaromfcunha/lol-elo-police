@@ -4,13 +4,15 @@ INSERT INTO player (
     summoner_id,
     puuid,
     game_name,
-    tag_line
+    tag_line,
+    notify_queues
 ) VALUES (
     @external_id,
     @summoner_id,
     @puuid,
     @game_name,
-    @tag_line
+    @tag_line,
+    @notify_queues
 ) RETURNING *;
 
 -- name: GetPlayers :many
@@ -20,7 +22,7 @@ FROM
     player;
 
 -- name: UpdatePlayer :exec
-UPDATE 
+UPDATE
     player
 SET
     solo_queue_id = (SELECT id FROM ranked_info WHERE ranked_info.external_id = @solo_queue_id),
