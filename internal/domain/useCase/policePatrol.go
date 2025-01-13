@@ -125,6 +125,7 @@ func (u PolicePatrol) createEntries(matchId string, players []entity.Player) (en
 		int(enum.FlexId),
 		int(enum.AramId),
 		int(enum.QuickPlayId),
+		int(enum.SwiftPlayId),
 	}
 	if !slices.Contains(allowedQueueIdTypes, matchInfo.Info.QueueID) {
 		return match, participants, errors.New("queue id type not supported")

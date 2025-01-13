@@ -22,6 +22,8 @@
         uma *Flex*
     {{- else if . | eq 450 -}}
         um *ARAM*
+    {{- else if . | eq 480 -}}
+        um *Normal Game (Swiftplay)*
     {{- else if . | eq 490 -}}
         um *Normal Game (Quickplay)*
     {{- else -}}

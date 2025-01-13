@@ -14,6 +14,7 @@ const (
 	SoloId      QueueId = 420
 	FlexId      QueueId = 440
 	AramId      QueueId = 450
+	SwiftPlayId QueueId = 480
 	QuickPlayId QueueId = 490
 )
 
