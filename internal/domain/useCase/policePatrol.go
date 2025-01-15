@@ -70,7 +70,7 @@ func (u PolicePatrolUseCase) Execute() error {
 	}
 
 	filteredMatches := slices.DeleteFunc(matches, func(m lol.Match) bool {
-		return !slices.Contains(allowedQueueIds, m.Info.QueueID)
+		return !slices.Contains(allowedQueueIds, m.Info.QueueID) || m.Info.Participants[0].GameEndedInEarlySurrender
 	})
 
 	matchesEntities, matchesParticipantsEntities, errs := u.createMatchesEntities(filteredMatches, players)
