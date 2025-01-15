@@ -39,17 +39,15 @@ func CreatePlayerController(db *sql.DB, riotHttpClient *http.RateLimitedClient) 
 			riotApiKey,
 		)
 
-		useCase := usecase.CreatePlayer{
-			PlayerRepository:           playerData,
-			RankedInfoRepository:       rankedInfoData,
-			MatchRepository:            matchData,
-			MatchParticipantRepository: matchParticipantData,
-			LolService:                 lolApi,
-		}
+		useCase := usecase.NewCreatePlayerUseCase(
+			playerData,
+			rankedInfoData,
+			matchData,
+			matchParticipantData,
+			lolApi,
+		)
 
-		handler := api.CreatePlayerHandler{
-			UseCase: useCase,
-		}
+		handler := api.NewCreatePlayerHandler(useCase)
 
 		return handler.Handle(ctx)
 	}

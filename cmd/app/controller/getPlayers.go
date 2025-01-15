@@ -20,14 +20,12 @@ func GetPlayersController(db *sql.DB) func(ctx *fiber.Ctx) error {
 			db,
 		)
 
-		useCase := usecase.GetPlayers{
-			PlayerRepository:     playerData,
-			RankedInfoRepository: rankedInfoData,
-		}
+		useCase := usecase.NewGetPlayersUseCase(
+			playerData,
+			rankedInfoData,
+		)
 
-		handler := api.GetPlayersHandler{
-			UseCase: useCase,
-		}
+		handler := api.NewGetPlayersHandler(useCase)
 
 		return handler.Handle(ctx)
 	}

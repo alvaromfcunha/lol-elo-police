@@ -58,19 +58,17 @@ func ExecutePatrolController(
 			templates,
 		)
 
-		useCase := usecase.PolicePatrol{
-			PlayerRepository:           playerData,
-			RankedInfoRepository:       rankedInfoData,
-			MatchRepository:            matchData,
-			MatchParticipantRepository: matchParticipantData,
-			LolService:                 lolApi,
-			WhatsappService:            whatsappService,
-			TemplateService:            templateService,
-		}
+		useCase := usecase.NewPolicePatrolUseCase(
+			playerData,
+			rankedInfoData,
+			matchData,
+			matchParticipantData,
+			lolApi,
+			whatsappService,
+			templateService,
+		)
 
-		handler := api.ExecutePatrolHandler{
-			UseCase: useCase,
-		}
+		handler := api.NewExecutePatrolHandler(useCase)
 
 		return handler.Handle(ctx)
 	}

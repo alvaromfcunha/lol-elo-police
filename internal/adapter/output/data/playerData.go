@@ -3,10 +3,10 @@ package data
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/logger"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
@@ -26,6 +26,8 @@ func NewPlayerData(ctx context.Context, db *sql.DB) PlayerData {
 }
 
 func (r PlayerData) Create(player entity.Player) error {
+	logger.Debug(r, "Creating player")
+
 	nqs := make([]string, len(player.NotifyQueues))
 	for idx, q := range player.NotifyQueues {
 		nqs[idx] = strconv.Itoa(int(q))
@@ -51,7 +53,7 @@ func (r PlayerData) Create(player entity.Player) error {
 			return repository.ErrPlayerAlreadyExists
 		}
 	default:
-		fmt.Println("Cannot create match:", err.Error())
+		logger.Error(r, "Cannot create match", err)
 		return repository.ErrCannotCreatePlayer
 	}
 

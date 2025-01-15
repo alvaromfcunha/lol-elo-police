@@ -3,8 +3,8 @@ package data
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/logger"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
@@ -23,6 +23,8 @@ func NewMatchParticipantData(ctx context.Context, db *sql.DB) MatchParticipantDa
 }
 
 func (d MatchParticipantData) Create(mp entity.MatchParticipant) error {
+	logger.Debug(d, "Creating new match participant")
+
 	params := database.CreateMatchParticipantParams{
 		ExternalID:        mp.Id.String(),
 		PlayerExternalID:  mp.Player.Id.String(),
@@ -47,7 +49,7 @@ func (d MatchParticipantData) Create(mp entity.MatchParticipant) error {
 	)
 
 	if err != nil {
-		fmt.Println("Cannot create MatchParticipant:", err.Error())
+		logger.Error(d, "Cannot create match participant", err)
 		return repository.ErrCannotCreateMatchParticipant
 	}
 

@@ -5,18 +5,35 @@ import (
 	"slices"
 
 	"github.com/KnutZuidema/golio/riot/lol"
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/logger"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/service"
 )
 
-type CreatePlayer struct {
+type CreatePlayerUseCase struct {
 	PlayerRepository           repository.IPlayerRepository
 	RankedInfoRepository       repository.IRankedInfoRepository
 	MatchRepository            repository.IMatchRepository
 	MatchParticipantRepository repository.IMatchParticipantRepository
 	LolService                 service.ILolService
+}
+
+func NewCreatePlayerUseCase(
+	playerRepository repository.IPlayerRepository,
+	rankedInfoRepository repository.IRankedInfoRepository,
+	matchRepository repository.IMatchRepository,
+	matchParticipantRepository repository.IMatchParticipantRepository,
+	lolService service.ILolService,
+) CreatePlayerUseCase {
+	return CreatePlayerUseCase{
+		PlayerRepository:           playerRepository,
+		RankedInfoRepository:       rankedInfoRepository,
+		MatchRepository:            matchRepository,
+		MatchParticipantRepository: matchParticipantRepository,
+		LolService:                 lolService,
+	}
 }
 
 type CreatePlayerInput struct {
@@ -29,7 +46,9 @@ type CreatePlayerOutput struct {
 	entity.Player
 }
 
-func (u CreatePlayer) Execute(input CreatePlayerInput) (CreatePlayerOutput, error) {
+func (u CreatePlayerUseCase) Execute(input CreatePlayerInput) (CreatePlayerOutput, error) {
+	logger.Debug(u, "Executing create player use case")
+
 	var output CreatePlayerOutput
 
 	account, err := u.LolService.GetAccountByRiotId(
@@ -129,8 +148,13 @@ func (u CreatePlayer) Execute(input CreatePlayerInput) (CreatePlayerOutput, erro
 				lastMatch.Info.GameDuration,
 			)
 
-			err = u.MatchRepository.Create(matchEntity)
-			if err != nil {
+			err := u.MatchRepository.Create(matchEntity)
+			if err == repository.ErrMatchAlreadyExists {
+				matchEntity, err = u.MatchRepository.GetByMatchId(lastMatchId)
+				if err != nil {
+					return output, errors.New("player last match already created and can't be get from database")
+				}
+			} else if err != nil {
 				return output, errors.New("cannot create player last match")
 			}
 

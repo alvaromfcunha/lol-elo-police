@@ -59,11 +59,11 @@ func main() {
 	riotHttpClient := http.NewRateLimitedClient(
 		[]http.RateLimit{
 			{
-				Rate:   18,
-				Window: 1 * time.Second,
+				Rate:   10,
+				Window: 2 * time.Second,
 			},
 			{
-				Rate:   95,
+				Rate:   50,
 				Window: 2 * time.Minute,
 			},
 		},

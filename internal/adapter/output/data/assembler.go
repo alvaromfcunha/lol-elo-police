@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/logger"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
@@ -12,11 +13,17 @@ import (
 )
 
 func AssemblePlayer(player database.Player) entity.Player {
-	nqss := strings.Split(player.NotifyQueues, ",")
-	nqs := make([]enum.QueueId, len(nqss))
-	for idx, q := range nqss {
-		if qi, err := strconv.Atoi(q); err == nil {
-			nqs[idx] = enum.QueueId(qi)
+	var nqs []enum.QueueId
+
+	if player.NotifyQueues != "" {
+		nqss := strings.Split(player.NotifyQueues, ",")
+		nqs = make([]enum.QueueId, len(nqss))
+		for idx, q := range nqss {
+			if qi, err := strconv.Atoi(q); err == nil {
+				nqs[idx] = enum.QueueId(qi)
+			} else {
+				logger.Warn(AssemblePlayer, "Player: '" + player.ExternalID + "' NotifyQueues item: '" + q + "' not atoi'able")
+			}
 		}
 	}
 

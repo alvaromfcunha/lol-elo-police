@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/logger"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity/enum"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
@@ -23,6 +24,8 @@ func NewRankedInfoData(ctx context.Context, db *sql.DB) RankedInfoData {
 }
 
 func (r RankedInfoData) Create(rankedInfo entity.RankedInfo) error {
+	logger.Debug(r, "Creating ranked info")
+
 	_, err := r.Queries.CreateRankedInfo(
 		r.Ctx,
 		database.CreateRankedInfoParams{
@@ -39,6 +42,7 @@ func (r RankedInfoData) Create(rankedInfo entity.RankedInfo) error {
 	)
 
 	if err != nil {
+		logger.Error(r, "Cannot create ranked info", err)
 		return repository.ErrCannotCreateRankedInfo
 	}
 
@@ -46,6 +50,8 @@ func (r RankedInfoData) Create(rankedInfo entity.RankedInfo) error {
 }
 
 func (r RankedInfoData) Update(rankedInfo entity.RankedInfo) error {
+	logger.Debug(r, "Updating ranked info")
+
 	err := r.Queries.UpdateRankedInfo(
 		r.Ctx,
 		database.UpdateRankedInfoParams{
@@ -59,6 +65,7 @@ func (r RankedInfoData) Update(rankedInfo entity.RankedInfo) error {
 	)
 
 	if err != nil {
+		logger.Error(r, "Cannot update ranked info", err)
 		return repository.ErrCannotUpdateRankedInfo
 	}
 
@@ -66,6 +73,8 @@ func (r RankedInfoData) Update(rankedInfo entity.RankedInfo) error {
 }
 
 func (r RankedInfoData) GetByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error) {
+	logger.Debug(r, "Getting ranked info by player and queue type")
+
 	var rankedInfo entity.RankedInfo
 
 	record, err := r.Queries.GetRankedInfoByPlayerExternalIdAndQueueType(
@@ -79,6 +88,7 @@ func (r RankedInfoData) GetByPlayerAndQueueType(player entity.Player, queueType 
 	if err == sql.ErrNoRows {
 		return rankedInfo, repository.ErrNoRankedInfoFound
 	} else if err != nil {
+		logger.Error(r, "Cannot get ranked info by player and queue type", err)
 		return rankedInfo, repository.ErrCannotGetRankedInfo
 	}
 
@@ -88,6 +98,8 @@ func (r RankedInfoData) GetByPlayerAndQueueType(player entity.Player, queueType 
 }
 
 func (r RankedInfoData) GetLatestByPlayerAndQueueType(player entity.Player, queueType enum.QueueType) (entity.RankedInfo, error) {
+	logger.Debug(r, "Getting latest ranked info by player and queue type")
+
 	var rankedInfo entity.RankedInfo
 
 	record, err := r.Queries.GetLatestRankedInfoByPlayerAndQueueType(
@@ -101,6 +113,7 @@ func (r RankedInfoData) GetLatestByPlayerAndQueueType(player entity.Player, queu
 	if err == sql.ErrNoRows {
 		return rankedInfo, repository.ErrNoRankedInfoFound
 	} else if err != nil {
+		logger.Error(r, "Cannot get latest ranked info by player and queue type", err)
 		return rankedInfo, repository.ErrCannotGetRankedInfo
 	}
 

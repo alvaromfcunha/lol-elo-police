@@ -3,8 +3,8 @@ package data
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
+	"github.com/alvaromfcunha/lol-elo-police/internal/adapter/output/logger"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/entity"
 	"github.com/alvaromfcunha/lol-elo-police/internal/domain/repository"
 	"github.com/alvaromfcunha/lol-elo-police/internal/generated/database"
@@ -24,6 +24,8 @@ func NewMatchData(ctx context.Context, db *sql.DB) MatchData {
 }
 
 func (r MatchData) Create(match entity.Match) error {
+	logger.Debug(r, "Creating match")
+
 	_, err := r.Queries.CreateMatch(
 		r.Ctx,
 		database.CreateMatchParams{
@@ -44,7 +46,7 @@ func (r MatchData) Create(match entity.Match) error {
 			return repository.ErrMatchAlreadyExists
 		}
 	default:
-		fmt.Println("Cannot create match:", err.Error())
+		logger.Error(r, "Cannot create match", err)
 		return repository.ErrCannotCreateMatch
 	}
 
@@ -52,6 +54,8 @@ func (r MatchData) Create(match entity.Match) error {
 }
 
 func (r MatchData) GetLastestByPlayer(player entity.Player) (entity.Match, error) {
+	logger.Debug(r, "Getting latest match by player")
+
 	record, err := r.Queries.GetLastestMatchesByPlayerExternalId(
 		r.Ctx,
 		player.Id.String(),
@@ -59,7 +63,7 @@ func (r MatchData) GetLastestByPlayer(player entity.Player) (entity.Match, error
 
 	var match entity.Match
 	if err != nil {
-		fmt.Println("Cannot get latest match by player:", err.Error())
+		logger.Error(r, "Cannot get latest match by player", err)
 		return match, repository.ErrCannotGetMatch
 	}
 	if len(record) == 0 {
@@ -72,6 +76,8 @@ func (r MatchData) GetLastestByPlayer(player entity.Player) (entity.Match, error
 }
 
 func (r MatchData) GetByMatchId(matchId string) (entity.Match, error) {
+	logger.Debug(r, "Getting match by id")
+
 	record, err := r.Queries.GetMatchesByMatchId(
 		r.Ctx,
 		matchId,
@@ -81,7 +87,7 @@ func (r MatchData) GetByMatchId(matchId string) (entity.Match, error) {
 	if err == sql.ErrNoRows {
 		return match, repository.ErrMatchNotFound
 	} else if err != nil {
-		fmt.Println("Cannot get match by match id:", err.Error())
+		logger.Error(r, "Cannot get match by match id", err)
 		return match, repository.ErrCannotGetMatch
 	}
 
